@@ -193,19 +193,32 @@ class PixelDrawer:
             self.canvas.itemconfig(rectangle, fill=self.current_draw_color)
 
     def save_drawing(self):
-        # Create a new image with the same dimensions as the canvas
-        image = Image.new('RGB', (self.GRID_WIDTH * self.SQUARE_SIZE, 
+        # Create high-res image
+        hi_res_image = Image.new('RGB', (self.GRID_WIDTH * self.SQUARE_SIZE, 
                                  self.GRID_HEIGHT * self.SQUARE_SIZE), 
                          'white')
-        draw = ImageDraw.Draw(image)
+        hi_res_draw = ImageDraw.Draw(hi_res_image)
         
-        # Draw each rectangle in the current state
+        # Create low-res image (8px × 8px per matrix)
+        low_res_width = 8 * self.MATRIX_COLS
+        low_res_height = 8 * self.MATRIX_ROWS
+        low_res_image = Image.new('RGB', (low_res_width, low_res_height), 'white')
+        low_res_draw = ImageDraw.Draw(low_res_image)
+        
+        # Draw each rectangle in both resolutions
         for row in range(self.GRID_HEIGHT):
             for col in range(self.GRID_WIDTH):
+                # High-res coordinates
                 x1 = col * self.SQUARE_SIZE
                 y1 = row * self.SQUARE_SIZE
                 x2 = x1 + self.SQUARE_SIZE
                 y2 = y1 + self.SQUARE_SIZE
+                
+                # Low-res coordinates (1:1 pixel mapping)
+                lx1 = col
+                ly1 = row
+                lx2 = lx1 + 1
+                ly2 = ly1 + 1
                 
                 rectangle = self.rectangles[row][col]
                 color = self.canvas.itemcget(rectangle, 'fill')
@@ -214,17 +227,22 @@ class PixelDrawer:
                 if color == self.LED_COLOR:
                     color = 'white'
                 
-                draw.rectangle([x1, y1, x2, y2], fill=color)
+                # Draw in both images
+                hi_res_draw.rectangle([x1, y1, x2, y2], fill=color)
+                low_res_draw.rectangle([lx1, ly1, lx2, ly2], fill=color)
         
         # Create 'drawings' directory if it doesn't exist
         if not os.path.exists('drawings'):
             os.makedirs('drawings')
             
-        # Save with timestamp
+        # Save both versions with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"drawings/pixel_art_{timestamp}.png"
-        image.save(filename)
-        print(f"Drawing saved as {filename}")
+        hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
+        low_res_filename = f"drawings/pixel_art_{timestamp}_8x8.png"
+        
+        hi_res_image.save(hi_res_filename)
+        low_res_image.save(low_res_filename)
+        print(f"Drawings saved as {hi_res_filename} and {low_res_filename}")
 
     def on_orientation_change(self):
         # The orientation_var.get() will return True for checked (rotated) and False for unchecked
