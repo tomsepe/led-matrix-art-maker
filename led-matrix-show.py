@@ -1,60 +1,51 @@
 import board
 from adafruit_ht16k33.matrix import Matrix8x8
-
-i2c = board.I2C()
-matrix = Matrix8x8(i2c)
-
-matrix = Matrix8x8(i2c, address=0x71)
-
-matrix.brightness = 0.5
-
-matrix.blink_rate = 3
-
-# Setting Individual Pixels
-matrix[0, 0] = 1
-matrix[4, 4] = 1
-matrix[7, 7] = 1
-
-# Filling a Row
-matrix.fill_row(0, 1)
-
-# Filling the Entire Matrix
-matrix.fill(1)
-
-# Clearing the Matrix
-matrix.fill(0)
-
-# Clearing a Row
-matrix.fill_row(0, 0)
-
-# Shifting the Matrix
-matrix.shift(2, 0)	# shift pixels to the right by 2
-matrix.shift(-1, 0)	# shift pixels to the left by 1
-matrix.shift(0, -3)	# shift pixels down by 3
-matrix.shift(-2, 2)	# shift pixels left by 2 and up by 2
-
-#loop all the pixels that are shifted
-matrix.shift(2, 0, True)	# loop pixels to the right by 2
-matrix.shift(-1, 0, True)	# loop pixels to the left by 1
-matrix.shift(0, -3, True)	# loop pixels down by 3
-matrix.shift(-2, 2, True)	# loop pixels left by 2 and up by 2
-
-# convenience functions
-matrix.shift_up()		# Shift pixels up
-matrix.shift_left()		# Shift pixels left
-matrix.shift_down()		# Shift pixels down
-matrix.shift_right()		# Shift pixels right
-matrix.shift_up(True)		# Loop pixels up
-matrix.shift_left(True)	# Loop pixels left
-matrix.shift_down(True)	# Loop pixels down
-matrix.shift_right(True)	# Loop pixels right
-
-# displayiong an image
-import board
 from PIL import Image
-from adafruit_ht16k33 import matrix
 
-matrix = matrix.Matrix8x8(board.I2C())
+# Initialize I2C
+i2c = board.I2C()
 
-image = Image.open("images/led_matrices_squares-mono-8x8.png")
-matrix.image(image)
+# Create three matrix objects with different I2C addresses
+# Typical addresses are 0x70, 0x71, 0x72, but verify your actual addresses
+matrix1 = Matrix8x8(i2c, address=0x70)
+matrix2 = Matrix8x8(i2c, address=0x71)
+matrix3 = Matrix8x8(i2c, address=0x72)
+
+# Set brightness for all matrices (0.0 to 1.0)
+matrix1.brightness = 0.5
+matrix2.brightness = 0.5
+matrix3.brightness = 0.5
+
+# Optional: Set blink rate for all matrices
+matrix1.blink_rate = 0
+matrix2.blink_rate = 0
+matrix3.blink_rate = 0
+
+# If you want to display an image across all three matrices
+# You'll need an image that's 24x8 pixels (3 matrices × 8 pixels wide)
+image = Image.open("drawings/pixel-art-001.png")
+
+# Split the image into three 8x8 sections and display on each matrix
+# Assuming your image is 24x8 pixels
+left_section = image.crop((0, 0, 8, 8))
+middle_section = image.crop((8, 0, 16, 8))
+right_section = image.crop((16, 0, 24, 8))
+
+matrix1.image(left_section)
+matrix2.image(middle_section)
+matrix3.image(right_section)
+
+# Example of setting individual pixels on each matrix
+"""
+# Matrix 1 (leftmost)
+matrix1[0, 0] = 1  # Top-left pixel
+matrix1.fill(1)    # Fill all pixels
+
+# Matrix 2 (middle)
+matrix2[4, 4] = 1  # Middle pixel
+matrix2.fill(1)    # Fill all pixels
+
+# Matrix 3 (rightmost)
+matrix3[7, 7] = 1  # Bottom-right pixel
+matrix3.fill(1)    # Fill all pixels
+"""
