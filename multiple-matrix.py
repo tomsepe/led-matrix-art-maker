@@ -1,43 +1,23 @@
-#include <Wire.h>
-#include "Adafruit_LEDBackpack.h"
-#include "Adafruit_GFX.h"
+import board
+import busio
+from adafruit_ht16k33.matrix import Matrix8x8
 
-Adafruit_8x8matrix matrix = Adafruit_8x8matrix();
-""" 
-  matrix.begin(0x70);
-  matrix.drawRect(0, 0, 8, 8, LED_ON); """
+# Initialize I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
 
-# With multiple matrices, we could declare each matrix object with a distinct name:
-Adafruit_8x8matrix matrixOne   = Adafruit_8x8matrix();
-Adafruit_8x8matrix matrixTwo   = Adafruit_8x8matrix();
-Adafruit_8x8matrix matrixThree = Adafruit_8x8matrix();
+# Create an array of matrices
+matrices = []
+for i in range(3):
+    # Initialize each matrix with a different address (0x70, 0x71, 0x72)
+    matrix = Matrix8x8(i2c, address=0x70 + i)
+    matrix.brightness = 1.0  # Set brightness (0.0 to 1.0)
+    matrices.append(matrix)
 
-""" But we’ll usually find it easier to declare an object array. 
-There are three unique matrix addresses 
-so we declare a three-element array: """
+# Example of controlling different matrices
+matrices[0].pixel[0, 0] = 1  # Turn on pixel at (0,0) on first matrix
+matrices[1].fill(1)          # Fill all pixels on second matrix
+matrices[2].pixel[7, 7] = 1  # Turn on pixel at (7,7) on third matrix
 
-Adafruit_8x8matrix matrix[3] = {
-  Adafruit_8x8matrix(),
-  Adafruit_8x8matrix(),
-  Adafruit_8x8matrix(),
-
-};
-
-for(uint8_t i=0; i<3; i++) {
-    matrix[i] = Adafruit_8x8matrix();
-    matrix[i].begin(0x70 + i);
-}
-
-""" 
-To issue commands to a specific matrix, 
-we follow the array name (“matrix”) with an index — 
-the element number in the array (a four-element array
- has indices 0 through 2). The syntax and parameters 
- are otherwise the same as the single-matrix example.
- Here we issue different commands
- to each of three matrices in an array: 
- """
-  matrix[0].drawPixel(0, 0, LED_ON);
-  matrix[1].drawLine(0, 0, 7, 7, LED_ON);
-  matrix[2].drawRect(0, 0, 8, 8, LED_ON);
- # matrix[3].fillRect(2, 2, 4, 4, LED_ON);
+# Don't forget to show the changes
+for matrix in matrices:
+    matrix.show()
