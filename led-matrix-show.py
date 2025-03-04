@@ -11,9 +11,9 @@ i2c = board.I2C()
 
 # Create three matrix objects with different I2C addresses
 # Typical addresses are 0x70, 0x71, 0x72, but verify your actual addresses
-matrix1 = Matrix8x8(i2c, address=0x70)  # Left matrix
-matrix2 = Matrix8x8(i2c, address=0x71)  # Middle matrix
-matrix3 = Matrix8x8(i2c, address=0x72)  # Right matrix
+matrix1 = Matrix8x8(i2c, address=0x72)  # Right matrix (was Left)
+matrix2 = Matrix8x8(i2c, address=0x71)  # Middle matrix (unchanged)
+matrix3 = Matrix8x8(i2c, address=0x70)  # Left matrix (was Right)
 
 # Set brightness for all matrices (0.0 to 1.0)
 BRIGHTNESS = 0.5
@@ -35,14 +35,14 @@ def display_image(image_path):
         image = image.rotate(90, expand=True)
     
     # Split the image into three 8x8 sections and display on each matrix
-    left_section = image.crop((0, 0, 8, 8))
-    middle_section = image.crop((8, 0, 16, 8))
-    right_section = image.crop((16, 0, 24, 8))
+    right_section = image.crop((0, 0, 8, 8))    # Display on matrix1 (0x72)
+    middle_section = image.crop((8, 0, 16, 8))  # Display on matrix2 (0x71)
+    left_section = image.crop((16, 0, 24, 8))   # Display on matrix3 (0x70)
     
     # Display the sections on their respective matrices
-    matrix1.image(left_section)
-    matrix2.image(middle_section)
-    matrix3.image(right_section)
+    matrix1.image(right_section)  # Right matrix shows left section
+    matrix2.image(middle_section) # Middle matrix shows middle section
+    matrix3.image(left_section)   # Left matrix shows right section
     return True
 
 def get_image_files():
