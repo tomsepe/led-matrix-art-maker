@@ -26,10 +26,10 @@ This is where you'll display your pixel art on the LED matrices.
 
 ```bash
 # Create a virtual environment
-python3 -m venv venv
+python3 -m venv env
 
 # Activate the virtual environment
-source venv/bin/activate
+source env/bin/activate
 
 # Install required packages
 pip install pillow

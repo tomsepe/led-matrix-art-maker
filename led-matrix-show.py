@@ -17,12 +17,16 @@ for matrix in [matrix1, matrix2, matrix3]:
     matrix.brightness = BRIGHTNESS
     matrix.blink_rate = 0  # Disable blinking
 
-# Load the image (expecting 24x8 pixels - 3 matrices × 8 pixels wide)
+# Load the image
 image = Image.open("drawings/pixel-art-001.png")
 
-# Verify image dimensions
-if image.size != (24, 8):
-    raise ValueError(f"Image must be 24x8 pixels, got {image.size}")
+# Verify image dimensions (allowing both orientations)
+if image.size not in [(24, 8), (8, 24)]:
+    raise ValueError(f"Image must be 24x8 or 8x24 pixels, got {image.size}")
+
+# Rotate image if needed to get 24x8
+if image.size == (8, 24):
+    image = image.rotate(90, expand=True)
 
 # Split the image into three 8x8 sections and display on each matrix
 left_section = image.crop((0, 0, 8, 8))
