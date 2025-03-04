@@ -50,8 +50,21 @@ python bit-draw.py
 
 ### On Raspberry Pi
 ```bash
-# Display art on LED matrix
-python led-matrix-show.py
+# Display modes:
+
+# 1. Static - Display most recent 8x24 image
+python led-matrix-show.py static
+
+# 2. Loop - Cycle through all 8x24 images (3 seconds each)
+python led-matrix-show.py loop
+
+# 3. Single - Each matrix independently displays random 8x8 images
+# with random display times (2-5 seconds)
+python led-matrix-show.py single
 ```
 
 Note: `led-matrix-show.py` requires physical LED matrix hardware connected to your Raspberry Pi.
+
+## Image Formats
+- **8x24 images**: Used for `static` and `loop` modes, displayed across all three matrices
+- **8x8 images**: Used for `single` mode, displayed independently on each matrix
