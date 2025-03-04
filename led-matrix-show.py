@@ -4,6 +4,7 @@ from PIL import Image
 import os
 import glob
 import time
+import argparse
 
 # Initialize I2C
 i2c = board.I2C()
@@ -44,19 +45,34 @@ def display_image(image_path):
     matrix3.image(right_section)
     return True
 
-def main():
+def get_image_files():
+    """Get list of 8x24 image files"""
+    image_files = glob.glob("images/pixel_art_*8x24*.png")
+    if not image_files:
+        print("No 8x24 image files found in 'images' directory")
+        return None
+    return sorted(image_files)
+
+def display_static():
+    """Display the most recent image"""
+    image_files = get_image_files()
+    if not image_files:
+        return
+    
+    # Get most recent file
+    latest_image = max(image_files, key=os.path.getctime)
+    print(f"Displaying {os.path.basename(latest_image)}")
+    display_image(latest_image)
+
+def display_loop():
+    """Loop through all images"""
     DISPLAY_TIME = 3  # seconds to display each image
     
     while True:  # Loop forever
-        # Get list of image files that have "8x24" in the filename
-        image_files = glob.glob("images/pixel_art_*8x24*.png")
+        image_files = get_image_files()
         if not image_files:
-            print("No 8x24 image files found in 'images' directory")
             time.sleep(5)  # Wait 5 seconds before checking again
             continue
-        
-        # Sort files by name to ensure consistent order
-        image_files.sort()
         
         # Display each image in sequence
         for image_path in image_files:
@@ -64,8 +80,20 @@ def main():
             if display_image(image_path):
                 time.sleep(DISPLAY_TIME)
 
+def main():
+    parser = argparse.ArgumentParser(description='Display images on LED matrix')
+    parser.add_argument('mode', choices=['static', 'loop'],
+                       help='static: display most recent image, loop: cycle through all images')
+    
+    args = parser.parse_args()
+    
+    if args.mode == 'static':
+        display_static()
+    else:  # loop mode
+        display_loop()
+
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nExiting slideshow")
+        print("\nExiting display")
