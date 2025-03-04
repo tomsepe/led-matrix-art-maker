@@ -6,6 +6,12 @@ from PIL import Image, ImageDraw
 from datetime import datetime
 import os
 
+def ensure_directories():
+    """Create necessary directories if they don't exist"""
+    for directory in ['drawings', 'images']:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
 class MatrixConfigDialog(simpledialog.Dialog):
     def body(self, master):
         tk.Label(master, text="Enter matrix configuration:").grid(row=0, columnspan=2)
@@ -193,6 +199,9 @@ class PixelDrawer:
             self.canvas.itemconfig(rectangle, fill=self.current_draw_color)
 
     def save_drawing(self):
+        # Ensure directories exist
+        ensure_directories()
+        
         # Create high-res image
         hi_res_image = Image.new('RGB', (self.GRID_WIDTH * self.SQUARE_SIZE, 
                                  self.GRID_HEIGHT * self.SQUARE_SIZE), 
@@ -231,14 +240,10 @@ class PixelDrawer:
                 hi_res_draw.rectangle([x1, y1, x2, y2], fill=color)
                 low_res_draw.rectangle([lx1, ly1, lx2, ly2], fill=color)
         
-        # Create 'drawings' directory if it doesn't exist
-        if not os.path.exists('drawings'):
-            os.makedirs('drawings')
-            
-        # Save both versions with timestamp
+        # Save with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
-        low_res_filename = f"drawings/pixel_art_{timestamp}_8x8.png"
+        low_res_filename = f"images/pixel_art_{timestamp}_8x8.png"
         
         hi_res_image.save(hi_res_filename)
         low_res_image.save(low_res_filename)
