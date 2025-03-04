@@ -243,7 +243,7 @@ class PixelDrawer:
         # Save with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
-        low_res_filename = f"images/pixel_art_{timestamp}_8x8.png"
+        low_res_filename = f"images/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
         
         hi_res_image.save(hi_res_filename)
         low_res_image.save(low_res_filename)
