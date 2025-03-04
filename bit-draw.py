@@ -24,7 +24,7 @@ class MatrixConfigDialog(simpledialog.Dialog):
         tk.Label(master, text="Number of rows:").grid(row=2)
         self.rows = tk.Entry(master)
         self.rows.grid(row=2, column=1)
-        self.rows.insert(0, "3")
+        self.rows.insert(0, "1")
         
         tk.Label(master, text="LED Color:").grid(row=3)
         self.led_colors = {
