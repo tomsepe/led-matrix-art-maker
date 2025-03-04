@@ -48,10 +48,10 @@ def main():
     DISPLAY_TIME = 3  # seconds to display each image
     
     while True:  # Loop forever
-        # Get list of image files
-        image_files = glob.glob("images/pixel_art_*.png")
+        # Get list of image files that have "8x24" in the filename
+        image_files = glob.glob("images/pixel_art_*8x24*.png")
         if not image_files:
-            print("No image files found in 'images' directory")
+            print("No 8x24 image files found in 'images' directory")
             time.sleep(5)  # Wait 5 seconds before checking again
             continue
         
