@@ -5,6 +5,7 @@ import os
 import glob
 import time
 import argparse
+import random
 
 # Initialize I2C
 i2c = board.I2C()
@@ -80,15 +81,64 @@ def display_loop():
             if display_image(image_path):
                 time.sleep(DISPLAY_TIME)
 
+def get_8x8_image_files():
+    """Get list of 8x8 image files"""
+    image_files = glob.glob("images/pixel_art_*8x8*.png")
+    if not image_files:
+        print("No 8x8 image files found in 'images' directory")
+        return None
+    return sorted(image_files)
+
+def display_random_singles():
+    """Display random 8x8 images on each matrix independently"""
+    matrices = [matrix1, matrix2, matrix3]
+    display_times = [2, 3, 4, 5]  # Possible display durations in seconds
+    next_change = [0, 0, 0]  # Next change time for each matrix
+    
+    while True:
+        image_files = get_8x8_image_files()
+        if not image_files:
+            time.sleep(5)  # Wait 5 seconds before checking again
+            continue
+        
+        current_time = time.time()
+        
+        # Check each matrix
+        for i, matrix in enumerate(matrices):
+            if current_time >= next_change[i]:
+                # Choose random image and display time
+                image_path = random.choice(image_files)
+                display_time = random.choice(display_times)
+                
+                # Load and display image
+                try:
+                    image = Image.open(image_path)
+                    if image.size == (8, 8):
+                        matrix.image(image)
+                        print(f"Matrix {i+1}: Displaying {os.path.basename(image_path)} for {display_time}s")
+                    else:
+                        print(f"Skipping {image_path}: Invalid dimensions {image.size}")
+                except Exception as e:
+                    print(f"Error displaying {image_path}: {e}")
+                
+                # Set next change time
+                next_change[i] = current_time + display_time
+        
+        time.sleep(0.1)  # Small delay to prevent busy-waiting
+
 def main():
     parser = argparse.ArgumentParser(description='Display images on LED matrix')
-    parser.add_argument('mode', choices=['static', 'loop'],
-                       help='static: display most recent image, loop: cycle through all images')
+    parser.add_argument('mode', choices=['static', 'loop', 'single'],
+                       help='static: display most recent image, '
+                            'loop: cycle through all images, '
+                            'single: random 8x8 images on each matrix')
     
     args = parser.parse_args()
     
     if args.mode == 'static':
         display_static()
+    elif args.mode == 'single':
+        display_random_singles()
     else:  # loop mode
         display_loop()
 
