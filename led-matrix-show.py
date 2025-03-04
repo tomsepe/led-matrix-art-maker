@@ -1,6 +1,8 @@
 import board
 from adafruit_ht16k33.matrix import Matrix8x8
 from PIL import Image
+import os
+import glob
 
 # Initialize I2C
 i2c = board.I2C()
@@ -17,8 +19,13 @@ for matrix in [matrix1, matrix2, matrix3]:
     matrix.brightness = BRIGHTNESS
     matrix.blink_rate = 0  # Disable blinking
 
-# Load the image
-image = Image.open("drawings/pixel-art-001.png")
+# Find the most recent image file in the images directory
+image_files = glob.glob("images/pixel_art_*.png")
+if not image_files:
+    raise FileNotFoundError("No image files found in 'images' directory")
+
+latest_image = max(image_files, key=os.path.getctime)
+image = Image.open(latest_image)
 
 # Verify image dimensions (allowing both orientations)
 if image.size not in [(24, 8), (8, 24)]:
