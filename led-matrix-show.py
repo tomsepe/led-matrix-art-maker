@@ -92,7 +92,7 @@ def get_8x8_image_files():
 def display_random_singles():
     """Display random 8x8 images on each matrix independently"""
     matrices = [matrix1, matrix2, matrix3]
-    display_times = [2, 3, 4, 5]  # Possible display durations in seconds
+    display_times = [1, 2, 3, 4, 5]  # Possible display durations in seconds
     next_change = [0, 0, 0]  # Next change time for each matrix
     
     while True:

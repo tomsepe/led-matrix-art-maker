@@ -28,10 +28,10 @@ class MatrixConfigDialog(simpledialog.Dialog):
         
         tk.Label(master, text="LED Color:").grid(row=3)
         self.led_colors = {
+            'White': '#FFFFFF',
             'Red': '#FF0000',
             'Yellow-Green': '#9ACD32',
             'Blue': '#0000FF',
-            'White': '#FFFFFF',
             'Yellow': '#FFFF00',
             'Green': '#00FF00',
             'Amber': '#FFBF00'
