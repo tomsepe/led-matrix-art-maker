@@ -1,6 +1,26 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+/*
+ * Dual I2C Bus Scanner
+ * 
+ * This scanner detects I2C devices on two separate I2C buses.
+ * NOTE: This code requires hardware that supports multiple I2C buses!
+ * 
+ * Compatible Hardware:
+ * - ESP32 boards (built-in dual I2C support)
+ * - Raspberry Pi (with GPIO I2C configuration)
+ * - Other MCUs with multiple I2C peripherals
+ * 
+ * Not Compatible:
+ * - Arduino Uno, Nano, Metro Mini, or other basic Arduino boards
+ *   with single I2C bus hardware
+ * 
+ * Default Pin Configurations (ESP32):
+ * Bus 1 (Wire):  SDA = 21, SCL = 22
+ * Bus 2 (Wire1): SDA = 19, SCL = 18
+ */
+
 // Function declarations
 void I2C_ScannerWire();
 void I2C_ScannerWire1();
@@ -8,13 +28,16 @@ void I2C_ScannerWire1();
 void setup() {
   Serial.begin(115200);
 
-  Wire.begin();             // default SDA/SCL pins for Arduino Metro Mini: A4(SDA), A5(SCL)
-  Wire1.begin(19, 18);      // Second I2C bus (note: Metro Mini only has one I2C bus)
+  Wire.begin();        // Initialize primary I2C bus
+  Wire1.begin(19, 18); // Initialize secondary I2C bus
 
-  Serial.println("---------- Scanning Wire -------------");
+  Serial.println("\nDual I2C Bus Scanner");
+  Serial.println("-------------------");
+  
+  Serial.println("\n---------- Scanning Primary I2C Bus -------------");
   I2C_ScannerWire();
 
-  Serial.println("---------- Scanning Wire1 ------------");
+  Serial.println("\n---------- Scanning Secondary I2C Bus ------------");
   I2C_ScannerWire1();
 }
 

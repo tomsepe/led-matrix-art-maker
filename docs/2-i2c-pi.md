@@ -4,6 +4,18 @@
 
 This guide explains how to enable and configure multiple I2C buses on a Raspberry Pi 4 (2GB, rev 1.2) running the latest Raspbian Lite.
 
+> **Hardware Compatibility Note:**  
+> Multiple I2C bus configurations are only possible on hardware that supports multiple I2C controllers. Examples include:
+> - Raspberry Pi (using GPIO-based I2C)
+> - ESP32 boards (which have built-in support for 2 I2C buses)
+> - Some other microcontrollers with multiple I2C peripherals
+>
+> This setup will NOT work on boards with single I2C bus hardware like:
+> - Arduino Uno
+> - Arduino Nano
+> - Arduino Metro Mini
+> - Most basic Arduino boards
+
 ## Configuration Steps
 
 ### 1. Edit the Boot Configuration
