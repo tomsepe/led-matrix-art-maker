@@ -8,7 +8,7 @@ import os
 
 def ensure_directories():
     """Create necessary directories if they don't exist"""
-    for directory in ['drawings', 'images', 'bytes']:
+    for directory in ['drawings', 'images']:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -189,7 +189,7 @@ class PixelDrawer:
             self.canvas.itemconfig(rectangle, fill=self.current_draw_color)
 
     def save_all(self):
-        """Save both image formats and byte format"""
+        """Save both high-res and low-res images"""
         # Ensure directories exist
         ensure_directories()
         
@@ -197,9 +197,6 @@ class PixelDrawer:
         
         # Save images
         self.save_drawing(timestamp)
-        
-        # Save byte format
-        self.save_byte_format(timestamp)
 
     def save_drawing(self, timestamp):
         """Save high-res and low-res PNG images"""
@@ -248,56 +245,6 @@ class PixelDrawer:
         hi_res_image.save(hi_res_filename)
         low_res_image.save(low_res_filename)
         print(f"Drawings saved as {hi_res_filename} and {low_res_filename}")
-
-    def save_byte_format(self, timestamp):
-        """Save LED matrix byte format"""
-        filename = f"bytes/pixel_art_{timestamp}.bytes"
-        
-        byte_array = []
-        
-        if not self.orientation_var.get():
-            # Original orientation
-            for base_row in range(8):
-                for matrix_row in range(self.MATRIX_ROWS):
-                    for matrix_col in range(self.MATRIX_COLS):
-                        matrix_start_row = matrix_row * 8
-                        matrix_start_col = matrix_col * 8
-                        
-                        binary_number = 0
-                        for col in range(8):
-                            actual_row = base_row + matrix_start_row
-                            actual_col = col + matrix_start_col
-                            rectangle = self.rectangles[actual_row][actual_col]
-                            color = self.canvas.itemcget(rectangle, 'fill')
-                            bit = 1 if color == self.LED_COLOR else 0
-                            binary_number |= (bit << (7 - col))
-                        
-                        byte_array.append(binary_number)
-        else:
-            # Rotated orientation (-90 degrees)
-            for base_row in range(7, -1, -1):
-                for matrix_row in range(self.MATRIX_ROWS):
-                    for matrix_col in range(self.MATRIX_COLS):
-                        matrix_start_row = matrix_row * 8
-                        matrix_start_col = matrix_col * 8
-                        
-                        binary_number = 0
-                        for bit_pos in range(8):
-                            actual_row = matrix_start_row + (7 - bit_pos)
-                            actual_col = base_row + matrix_start_col
-                            
-                            rectangle = self.rectangles[actual_row][actual_col]
-                            color = self.canvas.itemcget(rectangle, 'fill')
-                            bit = 1 if color == self.LED_COLOR else 0
-                            binary_number |= (bit << bit_pos)
-                        
-                        byte_array.append(binary_number)
-        
-        # Save the byte array to file
-        with open(filename, 'wb') as f:
-            f.write(bytes(byte_array))
-        
-        print(f"Byte format saved as {filename}")
 
     def on_orientation_change(self):
         pass
