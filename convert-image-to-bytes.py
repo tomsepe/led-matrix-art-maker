@@ -7,95 +7,91 @@ from datetime import datetime
 
 def ensure_directories():
     """Create necessary directories if they don't exist"""
-    for directory in ['bytes']:
+    for directory in ['patterns']:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-def image_to_bytes(image_path):
-    """Convert an image to LED matrix byte format"""
+def image_to_pattern(image_path):
+    """Convert an 8x8 image to LED matrix pattern format"""
     try:
         # Open and verify image
         image = Image.open(image_path)
         
-        # Handle different image sizes
-        if image.size == (8, 24):
-            image = image.rotate(90, expand=True)
-        elif image.size == (8, 8):
-            # For 8x8 images, create a 24x8 image with the pattern repeated
-            new_image = Image.new('RGB', (24, 8), 'black')
-            for i in range(3):  # Repeat the pattern 3 times
-                new_image.paste(image, (i * 8, 0))
-            image = new_image
-        elif image.size != (24, 8):
-            print(f"Skipping {image_path}: Invalid dimensions {image.size}")
+        # Verify image is 8x8
+        if image.size != (8, 8):
+            print(f"Skipping {image_path}: Invalid dimensions {image.size}, must be 8x8")
             return None
             
         # Convert to black and white
         image = image.convert('L')  # Convert to grayscale
         
-        # Create byte array for the image
-        byte_array = []
+        # Create pattern string
+        pattern_lines = []
         
-        # Process each 8x8 matrix section
-        for matrix_start_x in range(0, 24, 8):
-            # Process each row in the matrix
-            for y in range(8):
-                byte_val = 0
-                # Process each pixel in the row
-                for x in range(8):
-                    pixel = image.getpixel((matrix_start_x + x, y))
-                    # Convert pixel to bit (white = 1, black = 0)
-                    bit = 1 if pixel > 127 else 0
-                    byte_val |= (bit << (7 - x))
-                byte_array.append(byte_val)
+        # Add header
+        pattern_name = os.path.basename(image_path).split('.')[0]
+        pattern_lines.append(f"    '{pattern_name}': bytes([")
+        pattern_lines.append("        # 8x8 matrix pattern")
         
-        return bytes(byte_array)
+        # Process each row
+        for y in range(8):
+            byte_val = 0
+            # Process each pixel in the row
+            for x in range(8):
+                pixel = image.getpixel((x, y))
+                # Convert pixel to bit (white = 1, black = 0)
+                bit = 1 if pixel > 127 else 0
+                byte_val |= (bit << (7 - x))
+            
+            # Format as binary literal
+            binary_str = f"        0b{byte_val:08b},"
+            pattern_lines.append(binary_str)
+        
+        # Close the pattern
+        pattern_lines.append("    ]),")
+        
+        return "\n".join(pattern_lines)
         
     except Exception as e:
         print(f"Error processing {image_path}: {e}")
         return None
 
 def convert_all_images():
-    """Convert all PNG images in images directory to byte format"""
+    """Convert all 8x8 PNG images in images directory to pattern format"""
     ensure_directories()
     
     # Get all PNG files
-    image_files = glob.glob("images/pixel_art_*.png")
+    image_files = glob.glob("images/pixel_art_*8x8*.png")
     if not image_files:
-        print("No image files found in 'images' directory")
+        print("No 8x8 image files found in 'images' directory")
         return
     
     print(f"Found {len(image_files)} images to convert")
     
-    # Process each image
-    for image_path in image_files:
-        print(f"Converting {os.path.basename(image_path)}...")
+    # Create patterns file
+    with open("patterns/led_patterns.py", "w") as f:
+        # Write file header
+        f.write("# LED Matrix Patterns\n")
+        f.write("# Auto-generated from 8x8 PNG files\n\n")
+        f.write("PATTERNS = {\n")
         
-        # Convert image to bytes
-        byte_data = image_to_bytes(image_path)
-        if byte_data is None:
-            continue
+        # Process each image
+        for image_path in image_files:
+            print(f"Converting {os.path.basename(image_path)}...")
             
-        # Extract timestamp from original filename
-        # Format is pixel_art_YYYYMMDD_HHMMSS_WxH.png
-        try:
-            base_name = os.path.basename(image_path)
-            name_parts = base_name.split('_')  # Split on underscores
-            timestamp = f"{name_parts[2]}_{name_parts[3]}"  # Combine date and time parts
-            
-            # Remove dimensions and .png from timestamp if present
-            timestamp = timestamp.split('_')[0] + '_' + timestamp.split('_')[1].split('.')[0]
-            
-        except Exception as e:
-            print(f"Error extracting timestamp from {base_name}, using current time: {e}")
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-        byte_filename = f"bytes/pixel_art_{timestamp}.bytes"
+            # Convert image to pattern
+            pattern_text = image_to_pattern(image_path)
+            if pattern_text is None:
+                continue
+                
+            # Write pattern to file
+            f.write(pattern_text)
+            f.write("\n\n")
         
-        # Save byte data
-        with open(byte_filename, 'wb') as f:
-            f.write(byte_data)
-        print(f"Saved as {byte_filename}")
+        # Close the patterns dictionary
+        f.write("}\n")
+    
+    print(f"Patterns saved to patterns/led_patterns.py")
 
 def main():
     print("Starting image conversion...")
