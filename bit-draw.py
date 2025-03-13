@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import simpledialog
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageTk
 from datetime import datetime
 import os
 
@@ -67,6 +67,9 @@ class PixelDrawer:
         self.root.title("Pixel Drawer")
         self.root.configure(bg='#2B2B2B')  # Dark grey background
         
+        # Set minimum window size (doubled width)
+        self.root.minsize(1600, 600)
+        
         # Get matrix configuration
         config_dialog = MatrixConfigDialog(root)
         if not config_dialog:  # Dialog was cancelled
@@ -79,78 +82,27 @@ class PixelDrawer:
         self.LED_COLOR = config_dialog.result_color
         
         # Constants for the grid
-        self.SQUARE_SIZE = 72  # Doubled from 36
-        self.GRID_WIDTH = 8 * self.MATRIX_COLS  # 8 pixels × number of columns
-        self.GRID_HEIGHT = 8 * self.MATRIX_ROWS  # 8 pixels × number of rows
+        self.SQUARE_SIZE = 36
+        self.GRID_WIDTH = 8 * self.MATRIX_COLS
+        self.GRID_HEIGHT = 8 * self.MATRIX_ROWS
         
-        # Create main frame with padding and background
-        self.main_frame = tk.Frame(root, bg='#2B2B2B', padx=40, pady=40)
-        self.main_frame.pack(expand=True)
+        # Create split view
+        self.split_frame = tk.Frame(root, bg='#2B2B2B')
+        self.split_frame.pack(expand=True, fill=tk.BOTH)
         
-        # Create canvas frame with border effect
-        self.canvas_frame = tk.Frame(
-            self.main_frame,
-            bg='#1E1E1E',  # Darker border
-            padx=2,
-            pady=2
-        )
-        self.canvas_frame.pack()
+        # Left side - Pixel Editor
+        self.editor_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
+        self.editor_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
         
-        # Create canvas
-        self.canvas = tk.Canvas(
-            self.canvas_frame,
-            width=self.GRID_WIDTH * self.SQUARE_SIZE,
-            height=self.GRID_HEIGHT * self.SQUARE_SIZE,
-            bg='#333333',  # Slightly lighter than background
-            highlightthickness=0  # Remove canvas border
-        )
-        self.canvas.pack()
+        # Right side - Image Gallery
+        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
+        self.gallery_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
         
-        # Create button frame with dark theme
-        self.button_frame = tk.Frame(self.main_frame, bg='#2B2B2B')
-        self.button_frame.pack(pady=20)
+        # Create editor components
+        self.create_editor()
         
-        # Style for buttons
-        button_style = {
-            'bg': '#404040',
-            'fg': 'white',
-            'relief': tk.FLAT,
-            'padx': 15,
-            'pady': 8
-        }
-        
-        # Create reset button
-        self.reset_button = tk.Button(
-            self.button_frame,
-            text="Reset Grid",
-            command=self.reset_grid,
-            **button_style
-        )
-        self.reset_button.pack(side=tk.LEFT, padx=5)
-        
-        # Create save button
-        self.save_button = tk.Button(
-            self.button_frame,
-            text="Save All",
-            command=self.save_all,
-            **button_style
-        )
-        self.save_button.pack(side=tk.LEFT, padx=5)
-        
-        # Create orientation checkbox with dark theme
-        self.orientation_var = tk.BooleanVar(value=False)
-        self.orientation_checkbox = tk.Checkbutton(
-            self.button_frame,
-            text="Rotate Output -90",
-            variable=self.orientation_var,
-            command=self.on_orientation_change,
-            bg='#2B2B2B',
-            fg='white',
-            selectcolor='#404040',
-            activebackground='#2B2B2B',
-            activeforeground='white'
-        )
-        self.orientation_checkbox.pack(side=tk.LEFT, padx=5)
+        # Create gallery components
+        self.create_gallery()
         
         # Store rectangle references
         self.rectangles = []
@@ -164,6 +116,188 @@ class PixelDrawer:
         
         # Add state to track the current drawing color
         self.current_draw_color = None
+        
+        # Load existing images
+        self.load_gallery_images()
+
+    def create_editor(self):
+        """Create the pixel editor side"""
+        # Create spacer frame for top padding
+        tk.Frame(self.editor_frame, bg='#2B2B2B', height=80).pack()
+        
+        # Create canvas frame with border effect
+        self.canvas_frame = tk.Frame(
+            self.editor_frame,
+            bg='#1E1E1E',
+            padx=2,
+            pady=2
+        )
+        self.canvas_frame.pack(expand=True)
+        
+        # Create canvas with padding frame
+        self.canvas_padding = tk.Frame(
+            self.canvas_frame,
+            bg='#333333',
+            padx=50,
+            pady=50
+        )
+        self.canvas_padding.pack(expand=True)
+        
+        # Create canvas
+        self.canvas = tk.Canvas(
+            self.canvas_padding,
+            width=self.GRID_WIDTH * self.SQUARE_SIZE,
+            height=self.GRID_HEIGHT * self.SQUARE_SIZE,
+            bg='#333333',
+            highlightthickness=0
+        )
+        self.canvas.pack()
+        
+        # Create button frame with dark theme
+        self.button_frame = tk.Frame(self.editor_frame, bg='#2B2B2B')
+        self.button_frame.pack(pady=40)
+        
+        # Style for buttons
+        button_style = {
+            'bg': '#404040',
+            'fg': 'white',
+            'relief': tk.FLAT,
+            'padx': 15,
+            'pady': 8
+        }
+        
+        # Create buttons
+        self.reset_button = tk.Button(
+            self.button_frame,
+            text="Reset Grid",
+            command=self.reset_grid,
+            **button_style
+        )
+        self.reset_button.pack(side=tk.LEFT, padx=5)
+        
+        self.save_button = tk.Button(
+            self.button_frame,
+            text="Save",
+            command=self.save_all,
+            **button_style
+        )
+        self.save_button.pack(side=tk.LEFT, padx=5)
+        
+        self.orientation_var = tk.BooleanVar(value=False)
+        self.orientation_checkbox = tk.Checkbutton(
+            self.button_frame,
+            text="Rotate Output -90",
+            variable=self.orientation_var,
+            command=self.on_orientation_change,
+            bg='#2B2B2B',
+            fg='white',
+            selectcolor='#404040',
+            activebackground='#2B2B2B',
+            activeforeground='white'
+        )
+        self.orientation_checkbox.pack(side=tk.LEFT, padx=5)
+
+    def create_gallery(self):
+        """Create the image gallery side"""
+        # Create gallery label
+        tk.Label(
+            self.gallery_frame,
+            text="Saved Drawings",
+            font=('Arial', 14),
+            bg='#2B2B2B',
+            fg='white',
+            pady=20
+        ).pack()
+        
+        # Create scrollable frame for images
+        self.gallery_canvas = tk.Canvas(
+            self.gallery_frame,
+            bg='#333333',
+            highlightthickness=0
+        )
+        scrollbar = tk.Scrollbar(
+            self.gallery_frame,
+            orient="vertical",
+            command=self.gallery_canvas.yview
+        )
+        
+        # Configure scrolling
+        self.gallery_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Create frame for image grid
+        self.gallery_grid = tk.Frame(
+            self.gallery_canvas,
+            bg='#333333'
+        )
+        
+        # Pack scrollbar and canvas
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.gallery_canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH, padx=20)
+        
+        # Create window in canvas for the frame
+        self.gallery_canvas.create_window(
+            (0, 0),
+            window=self.gallery_grid,
+            anchor="nw"
+        )
+        
+        # Configure canvas scrolling
+        self.gallery_grid.bind(
+            "<Configure>",
+            lambda e: self.gallery_canvas.configure(
+                scrollregion=self.gallery_canvas.bbox("all")
+            )
+        )
+
+    def load_gallery_images(self):
+        """Load and display existing high-res images"""
+        try:
+            image_files = sorted(
+                [f for f in os.listdir('drawings') if f.endswith('.png')],
+                reverse=True
+            )
+            
+            row = 0
+            col = 0
+            for img_file in image_files:
+                try:
+                    # Load and resize image
+                    img_path = os.path.join('drawings', img_file)
+                    img = Image.open(img_path)
+                    img.thumbnail((180, 180))  # Slightly smaller thumbnails to fit three columns
+                    
+                    # Convert to PhotoImage
+                    photo = ImageTk.PhotoImage(img)
+                    
+                    # Create frame for image
+                    img_frame = tk.Frame(
+                        self.gallery_grid,
+                        bg='#1E1E1E',
+                        padx=2,
+                        pady=2
+                    )
+                    img_frame.grid(row=row, column=col, padx=8, pady=8)
+                    
+                    # Add image label
+                    label = tk.Label(
+                        img_frame,
+                        image=photo,
+                        bg='#333333'
+                    )
+                    label.image = photo  # Keep reference
+                    label.pack()
+                    
+                    # Update grid position
+                    col += 1
+                    if col >= 3:  # Changed from 2 to 3 columns
+                        col = 0
+                        row += 1
+                        
+                except Exception as e:
+                    print(f"Error loading image {img_file}: {e}")
+                    
+        except Exception as e:
+            print(f"Error loading gallery: {e}")
 
     def create_grid(self):
         for row in range(self.GRID_HEIGHT):
