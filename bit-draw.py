@@ -67,8 +67,8 @@ class PixelDrawer:
         self.root.title("Pixel Drawer")
         self.root.configure(bg='#2B2B2B')  # Dark grey background
         
-        # Set minimum window size (reduced by 180px)
-        self.root.minsize(1420, 600)
+        # Set minimum window size (doubled width)
+        self.root.minsize(1600, 600)
         
         # Get matrix configuration
         config_dialog = MatrixConfigDialog(root)
@@ -94,10 +94,10 @@ class PixelDrawer:
         self.editor_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
         self.editor_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
         
-        # Right side - Image Gallery (fixed width)
-        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B', width=520)  # Reduced width
+        # Right side - Image Gallery (with fixed width)
+        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B', width=620)  # Reduced from ~800
         self.gallery_frame.pack(side=tk.LEFT, fill=tk.BOTH)
-        self.gallery_frame.pack_propagate(False)  # Prevent frame from shrinking
+        self.gallery_frame.pack_propagate(False)  # Prevent frame from shrinking to content
         
         # Create editor components
         self.create_editor()
@@ -350,6 +350,11 @@ class PixelDrawer:
         if self.current_draw_color is not None:
             self.canvas.itemconfig(rectangle, fill=self.current_draw_color)
 
+    def clear_gallery(self):
+        """Clear all images from the gallery grid"""
+        for widget in self.gallery_grid.winfo_children():
+            widget.destroy()
+
     def save_all(self):
         """Save both high-res and low-res images"""
         # Ensure directories exist
@@ -359,6 +364,10 @@ class PixelDrawer:
         
         # Save images
         self.save_drawing(timestamp)
+        
+        # Refresh gallery view
+        self.clear_gallery()
+        self.load_gallery_images()
 
     def save_drawing(self, timestamp):
         """Save high-res and low-res PNG images"""
