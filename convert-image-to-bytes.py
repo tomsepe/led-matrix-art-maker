@@ -17,9 +17,15 @@ def image_to_bytes(image_path):
         # Open and verify image
         image = Image.open(image_path)
         
-        # Check if image needs rotation
+        # Handle different image sizes
         if image.size == (8, 24):
             image = image.rotate(90, expand=True)
+        elif image.size == (8, 8):
+            # For 8x8 images, create a 24x8 image with the pattern repeated
+            new_image = Image.new('RGB', (24, 8), 'black')
+            for i in range(3):  # Repeat the pattern 3 times
+                new_image.paste(image, (i * 8, 0))
+            image = new_image
         elif image.size != (24, 8):
             print(f"Skipping {image_path}: Invalid dimensions {image.size}")
             return None
@@ -70,14 +76,18 @@ def convert_all_images():
         if byte_data is None:
             continue
             
-        # Create output filename
-        # Extract timestamp from original filename or use current time
+        # Extract timestamp from original filename
+        # Format is pixel_art_YYYYMMDD_HHMMSS_WxH.png
         try:
-            # Try to extract original timestamp from filename
             base_name = os.path.basename(image_path)
-            timestamp = base_name.split('_')[2].split('.')[0]  # Get timestamp part
-        except:
-            # If can't extract, use current time
+            name_parts = base_name.split('_')  # Split on underscores
+            timestamp = f"{name_parts[2]}_{name_parts[3]}"  # Combine date and time parts
+            
+            # Remove dimensions and .png from timestamp if present
+            timestamp = timestamp.split('_')[0] + '_' + timestamp.split('_')[1].split('.')[0]
+            
+        except Exception as e:
+            print(f"Error extracting timestamp from {base_name}, using current time: {e}")
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             
         byte_filename = f"bytes/pixel_art_{timestamp}.bytes"
