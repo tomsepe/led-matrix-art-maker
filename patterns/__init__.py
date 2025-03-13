@@ -1,0 +1,3 @@
+"""
+LED Matrix Patterns Package
+""" 
