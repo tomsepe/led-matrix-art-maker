@@ -1,6 +1,5 @@
 import board
 from adafruit_ht16k33.matrix import Matrix8x8
-from PIL import Image
 import os
 import glob
 import time
@@ -22,82 +21,85 @@ for matrix in [matrix1, matrix2, matrix3]:
     matrix.brightness = BRIGHTNESS
     matrix.blink_rate = 0  # Disable blinking
 
-def display_image(image_path):
-    """Load and display an image on the LED matrices"""
-    image = Image.open(image_path)
-    
-    # Verify image dimensions (allowing both orientations)
-    if image.size not in [(24, 8), (8, 24)]:
-        print(f"Skipping {image_path}: Invalid dimensions {image.size}")
+def display_bytes(byte_path):
+    """Load and display bytes on the LED matrices"""
+    try:
+        with open(byte_path, 'rb') as f:
+            data = f.read()
+        
+        # Each 8x8 matrix needs 8 bytes (one byte per row)
+        # For 3 matrices we need 24 bytes total
+        if len(data) != 24:
+            print(f"Skipping {byte_path}: Invalid data length {len(data)}")
+            return False
+        
+        # Split the bytes into three 8-byte sections for each matrix
+        right_data = data[0:8]     # First 8 bytes for matrix1 (0x72)
+        middle_data = data[8:16]   # Next 8 bytes for matrix2 (0x71)
+        left_data = data[16:24]    # Last 8 bytes for matrix3 (0x70)
+        
+        # Display the data on each matrix
+        for i, row in enumerate(right_data):
+            matrix1.pixel = row  # Set entire row using byte value
+        for i, row in enumerate(middle_data):
+            matrix2.pixel = row
+        for i, row in enumerate(left_data):
+            matrix3.pixel = row
+            
+        return True
+    except Exception as e:
+        print(f"Error displaying {byte_path}: {e}")
         return False
-    
-    # Rotate image if needed to get 24x8
-    if image.size == (8, 24):
-        image = image.rotate(90, expand=True)
-    
-    # Split the image into three 8x8 sections and display on each matrix
-    right_section = image.crop((0, 0, 8, 8))    # Display on matrix1 (0x72)
-    middle_section = image.crop((8, 0, 16, 8))  # Display on matrix2 (0x71)
-    left_section = image.crop((16, 0, 24, 8))   # Display on matrix3 (0x70)
-    
-    # Display the sections on their respective matrices
-    matrix1.image(right_section)  # Right matrix shows left section
-    matrix2.image(middle_section) # Middle matrix shows middle section
-    matrix3.image(left_section)   # Left matrix shows right section
-    return True
 
-def get_image_files():
-    """Get list of 8x24 image files"""
-    image_files = glob.glob("images/pixel_art_*8x24*.png")
-    if not image_files:
-        print("No 8x24 image files found in 'images' directory")
+def get_byte_files():
+    """Get list of byte files"""
+    byte_files = glob.glob("bytes/pixel_art_*.bytes")
+    if not byte_files:
+        print("No byte files found in 'bytes' directory")
         return None
-    return sorted(image_files)
+    return sorted(byte_files)
 
 def display_static():
-    """Display the most recent image"""
-    image_files = get_image_files()
-    if not image_files:
+    """Display the most recent byte file"""
+    byte_files = get_byte_files()
+    if not byte_files:
         return
     
     # Get most recent file
-    latest_image = max(image_files, key=os.path.getctime)
-    print(f"Displaying {os.path.basename(latest_image)}")
-    display_image(latest_image)
+    latest_file = max(byte_files, key=os.path.getctime)
+    print(f"Displaying {os.path.basename(latest_file)}")
+    display_bytes(latest_file)
 
 def display_loop():
-    """Loop through all images"""
-    DISPLAY_TIME = 3  # seconds to display each image
+    """Loop through all byte files"""
+    DISPLAY_TIME = 3  # seconds to display each file
     
     while True:  # Loop forever
-        image_files = get_image_files()
-        if not image_files:
+        byte_files = get_byte_files()
+        if not byte_files:
             time.sleep(5)  # Wait 5 seconds before checking again
             continue
         
-        # Display each image in sequence
-        for image_path in image_files:
-            print(f"Displaying {os.path.basename(image_path)}")
-            if display_image(image_path):
+        # Display each file in sequence
+        for byte_path in byte_files:
+            print(f"Displaying {os.path.basename(byte_path)}")
+            if display_bytes(byte_path):
                 time.sleep(DISPLAY_TIME)
 
-def get_8x8_image_files():
-    """Get list of 8x8 image files"""
-    image_files = glob.glob("images/pixel_art_*8x8*.png")
-    if not image_files:
-        print("No 8x8 image files found in 'images' directory")
-        return None
-    return sorted(image_files)
+def get_8x8_byte_files():
+    """Get list of single matrix (8 byte) files"""
+    # For future use if we implement single matrix byte files
+    return get_byte_files()
 
 def display_random_singles():
-    """Display random 8x8 images on each matrix independently"""
+    """Display random sections from byte files on each matrix independently"""
     matrices = [matrix1, matrix2, matrix3]
     display_times = [1, 2, 3, 4, 5]  # Possible display durations in seconds
     next_change = [0, 0, 0]  # Next change time for each matrix
     
     while True:
-        image_files = get_8x8_image_files()
-        if not image_files:
+        byte_files = get_byte_files()
+        if not byte_files:
             time.sleep(5)  # Wait 5 seconds before checking again
             continue
         
@@ -106,20 +108,24 @@ def display_random_singles():
         # Check each matrix
         for i, matrix in enumerate(matrices):
             if current_time >= next_change[i]:
-                # Choose random image and display time
-                image_path = random.choice(image_files)
+                # Choose random file and display time
+                byte_path = random.choice(byte_files)
                 display_time = random.choice(display_times)
                 
-                # Load and display image
+                # Load and display section
                 try:
-                    image = Image.open(image_path)
-                    if image.size == (8, 8):
-                        matrix.image(image)
-                        print(f"Matrix {i+1}: Displaying {os.path.basename(image_path)} for {display_time}s")
-                    else:
-                        print(f"Skipping {image_path}: Invalid dimensions {image.size}")
+                    with open(byte_path, 'rb') as f:
+                        data = f.read()
+                    if len(data) == 24:  # Ensure we have complete data
+                        # Select the appropriate 8-byte section for this matrix
+                        section_start = i * 8
+                        section_data = data[section_start:section_start + 8]
+                        # Display the section
+                        for row, byte_val in enumerate(section_data):
+                            matrix.pixel = byte_val
+                        print(f"Matrix {i+1}: Displaying section from {os.path.basename(byte_path)} for {display_time}s")
                 except Exception as e:
-                    print(f"Error displaying {image_path}: {e}")
+                    print(f"Error displaying {byte_path}: {e}")
                 
                 # Set next change time
                 next_change[i] = current_time + display_time
@@ -127,11 +133,11 @@ def display_random_singles():
         time.sleep(0.1)  # Small delay to prevent busy-waiting
 
 def main():
-    parser = argparse.ArgumentParser(description='Display images on LED matrix')
+    parser = argparse.ArgumentParser(description='Display byte patterns on LED matrix')
     parser.add_argument('mode', choices=['static', 'loop', 'single'],
-                       help='static: display most recent image, '
-                            'loop: cycle through all images, '
-                            'single: random 8x8 images on each matrix')
+                       help='static: display most recent pattern, '
+                            'loop: cycle through all patterns, '
+                            'single: random sections on each matrix')
     
     args = parser.parse_args()
     
