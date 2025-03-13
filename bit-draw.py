@@ -67,8 +67,8 @@ class PixelDrawer:
         self.root.title("Pixel Drawer")
         self.root.configure(bg='#2B2B2B')  # Dark grey background
         
-        # Set minimum window size (doubled width)
-        self.root.minsize(1600, 600)
+        # Set minimum window size (reduced by 180px)
+        self.root.minsize(1420, 600)
         
         # Get matrix configuration
         config_dialog = MatrixConfigDialog(root)
@@ -94,9 +94,10 @@ class PixelDrawer:
         self.editor_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
         self.editor_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
         
-        # Right side - Image Gallery
-        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
-        self.gallery_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+        # Right side - Image Gallery (fixed width)
+        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B', width=520)  # Reduced width
+        self.gallery_frame.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.gallery_frame.pack_propagate(False)  # Prevent frame from shrinking
         
         # Create editor components
         self.create_editor()
@@ -264,7 +265,7 @@ class PixelDrawer:
                     # Load and resize image
                     img_path = os.path.join('drawings', img_file)
                     img = Image.open(img_path)
-                    img.thumbnail((180, 180))  # Slightly smaller thumbnails to fit three columns
+                    img.thumbnail((120, 120))  # Smaller thumbnails for four columns
                     
                     # Convert to PhotoImage
                     photo = ImageTk.PhotoImage(img)
@@ -276,7 +277,7 @@ class PixelDrawer:
                         padx=2,
                         pady=2
                     )
-                    img_frame.grid(row=row, column=col, padx=8, pady=8)
+                    img_frame.grid(row=row, column=col, padx=6, pady=6)  # Reduced padding
                     
                     # Add image label
                     label = tk.Label(
@@ -289,7 +290,7 @@ class PixelDrawer:
                     
                     # Update grid position
                     col += 1
-                    if col >= 3:  # Changed from 2 to 3 columns
+                    if col >= 4:  # Changed to 4 columns
                         col = 0
                         row += 1
                         
