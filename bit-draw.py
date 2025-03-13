@@ -8,7 +8,7 @@ import os
 
 def ensure_directories():
     """Create necessary directories if they don't exist"""
-    for directory in ['drawings', 'images']:
+    for directory in ['drawings', 'images', 'bytes']:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -107,26 +107,16 @@ class PixelDrawer:
         )
         self.reset_button.pack(side=tk.LEFT, padx=5)
         
-        # Create save PNG button
+        # Create save button
         self.save_button = tk.Button(
             self.button_frame,
-            text="Save as PNG",
-            command=self.save_drawing
+            text="Save All",
+            command=self.save_all
         )
         self.save_button.pack(side=tk.LEFT, padx=5)
         
-        # Create save Arduino button
-        self.save_arduino_button = tk.Button(
-            self.button_frame,
-            text="Save for Arduino",
-            command=self.save_arduino_format
-        )
-        self.save_arduino_button.pack(side=tk.LEFT, padx=5)
-        
-        # Add orientation state
-        self.orientation_var = tk.BooleanVar(value=False)  # Changed to False to start unchecked
-        
         # Create orientation checkbox
+        self.orientation_var = tk.BooleanVar(value=False)
         self.orientation_checkbox = tk.Checkbutton(
             self.button_frame,
             text="Rotate Output -90",
@@ -143,11 +133,11 @@ class PixelDrawer:
         
         # Bind click and drag events
         self.canvas.bind('<Button-1>', self.on_click)
-        self.canvas.bind('<B1-Motion>', self.on_drag)  # Add drag binding
+        self.canvas.bind('<B1-Motion>', self.on_drag)
         
         # Add state to track the current drawing color
         self.current_draw_color = None
-        
+
     def create_grid(self):
         for row in range(self.GRID_HEIGHT):
             row_rectangles = []
@@ -198,14 +188,25 @@ class PixelDrawer:
         if self.current_draw_color is not None:
             self.canvas.itemconfig(rectangle, fill=self.current_draw_color)
 
-    def save_drawing(self):
+    def save_all(self):
+        """Save both image formats and byte format"""
         # Ensure directories exist
         ensure_directories()
         
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Save images
+        self.save_drawing(timestamp)
+        
+        # Save byte format
+        self.save_byte_format(timestamp)
+
+    def save_drawing(self, timestamp):
+        """Save high-res and low-res PNG images"""
         # Create high-res image
         hi_res_image = Image.new('RGB', (self.GRID_WIDTH * self.SQUARE_SIZE, 
-                                 self.GRID_HEIGHT * self.SQUARE_SIZE), 
-                         'white')
+                                self.GRID_HEIGHT * self.SQUARE_SIZE), 
+                        'white')
         hi_res_draw = ImageDraw.Draw(hi_res_image)
         
         # Create low-res image (8px × 8px per matrix)
@@ -240,8 +241,7 @@ class PixelDrawer:
                 hi_res_draw.rectangle([x1, y1, x2, y2], fill=color)
                 low_res_draw.rectangle([lx1, ly1, lx2, ly2], fill=color)
         
-        # Save with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Save images with timestamp
         hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
         low_res_filename = f"images/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
         
@@ -249,83 +249,58 @@ class PixelDrawer:
         low_res_image.save(low_res_filename)
         print(f"Drawings saved as {hi_res_filename} and {low_res_filename}")
 
-    def on_orientation_change(self):
-        # The orientation_var.get() will return True for checked (rotated) and False for unchecked
-        pass  # We don't need to do anything here since we'll check orientation_var.get() when saving
-    
-    def save_arduino_format(self):
-        if not os.path.exists('arduino'):
-            os.makedirs('arduino')
-            
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"arduino/pixel_art_{timestamp}.h"
+    def save_byte_format(self, timestamp):
+        """Save LED matrix byte format"""
+        filename = f"bytes/pixel_art_{timestamp}.bytes"
         
-        with open(filename, 'w') as f:
-            f.write("static uint8_t PROGMEM\n")
-            f.write(f"  pixelImg[][{self.GRID_WIDTH}] = {{\n  {{ ")  # Updated array size
-            
-            if not self.orientation_var.get():
-                self.save_orientation_1(f)
-            else:
-                self.save_orientation_2(f)
-            
-            f.write(" },\n    };\n")
+        byte_array = []
         
-        print(f"Arduino format saved as {filename}")
-    
-    def save_orientation_1(self, f):
-        # Original orientation
-        for base_row in range(8):
-            if base_row > 0:
-                f.write("\n    ")
-            
-            for matrix_row in range(self.MATRIX_ROWS):
-                for matrix_col in range(self.MATRIX_COLS):
-                    matrix_start_row = matrix_row * 8
-                    matrix_start_col = matrix_col * 8
-                    
-                    binary_number = 0
-                    for col in range(8):  # Process each column within the matrix
-                        actual_row = base_row + matrix_start_row
-                        actual_col = col + matrix_start_col
-                        rectangle = self.rectangles[actual_row][actual_col]
-                        color = self.canvas.itemcget(rectangle, 'fill')
-                        bit = 1 if color == self.LED_COLOR else 0
-                        binary_number |= (bit << (7 - col))
-                    
-                    binary_str = f"B{binary_number:08b}"
-                    f.write(binary_str)
-                    # Add comma if not the last number
-                    if not (base_row == 7 and matrix_row == self.MATRIX_ROWS-1 
-                           and matrix_col == self.MATRIX_COLS-1):
-                        f.write(", ")
-    
-    def save_orientation_2(self, f):
-        # Rotated orientation
-        for base_row in range(7, -1, -1):
-            if base_row < 7:
-                f.write("\n    ")
-            
-            for matrix_row in range(self.MATRIX_ROWS):
-                for matrix_col in range(self.MATRIX_COLS):
-                    matrix_start_row = matrix_row * 8
-                    matrix_start_col = matrix_col * 8
-                    
-                    binary_number = 0
-                    for bit_pos in range(8):
-                        actual_row = matrix_start_row + (7 - bit_pos)
-                        actual_col = base_row + matrix_start_col
+        if not self.orientation_var.get():
+            # Original orientation
+            for base_row in range(8):
+                for matrix_row in range(self.MATRIX_ROWS):
+                    for matrix_col in range(self.MATRIX_COLS):
+                        matrix_start_row = matrix_row * 8
+                        matrix_start_col = matrix_col * 8
                         
-                        rectangle = self.rectangles[actual_row][actual_col]
-                        color = self.canvas.itemcget(rectangle, 'fill')
-                        bit = 1 if color == self.LED_COLOR else 0
-                        binary_number |= (bit << bit_pos)
-                    
-                    binary_str = f"B{binary_number:08b}"
-                    f.write(binary_str)
-                    if not (base_row == 0 and matrix_row == self.MATRIX_ROWS-1 
-                           and matrix_col == self.MATRIX_COLS-1):
-                        f.write(", ")
+                        binary_number = 0
+                        for col in range(8):
+                            actual_row = base_row + matrix_start_row
+                            actual_col = col + matrix_start_col
+                            rectangle = self.rectangles[actual_row][actual_col]
+                            color = self.canvas.itemcget(rectangle, 'fill')
+                            bit = 1 if color == self.LED_COLOR else 0
+                            binary_number |= (bit << (7 - col))
+                        
+                        byte_array.append(binary_number)
+        else:
+            # Rotated orientation (-90 degrees)
+            for base_row in range(7, -1, -1):
+                for matrix_row in range(self.MATRIX_ROWS):
+                    for matrix_col in range(self.MATRIX_COLS):
+                        matrix_start_row = matrix_row * 8
+                        matrix_start_col = matrix_col * 8
+                        
+                        binary_number = 0
+                        for bit_pos in range(8):
+                            actual_row = matrix_start_row + (7 - bit_pos)
+                            actual_col = base_row + matrix_start_col
+                            
+                            rectangle = self.rectangles[actual_row][actual_col]
+                            color = self.canvas.itemcget(rectangle, 'fill')
+                            bit = 1 if color == self.LED_COLOR else 0
+                            binary_number |= (bit << bit_pos)
+                        
+                        byte_array.append(binary_number)
+        
+        # Save the byte array to file
+        with open(filename, 'wb') as f:
+            f.write(bytes(byte_array))
+        
+        print(f"Byte format saved as {filename}")
+
+    def on_orientation_change(self):
+        pass
 
     def reset_grid(self):
         # Set all squares back to black
