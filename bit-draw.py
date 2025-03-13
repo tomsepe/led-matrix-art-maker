@@ -36,7 +36,7 @@ class MatrixConfigDialog(simpledialog.Dialog):
             'Green': '#00FF00',
             'Amber': '#FFBF00'
         }
-        self.color_var = tk.StringVar(value='Red')
+        self.color_var = tk.StringVar(value='White')
         self.color_menu = tk.OptionMenu(
             master,
             self.color_var,
@@ -65,6 +65,7 @@ class PixelDrawer:
     def __init__(self, root):
         self.root = root
         self.root.title("Pixel Drawer")
+        self.root.configure(bg='#2B2B2B')  # Dark grey background
         
         # Get matrix configuration
         config_dialog = MatrixConfigDialog(root)
@@ -78,32 +79,52 @@ class PixelDrawer:
         self.LED_COLOR = config_dialog.result_color
         
         # Constants for the grid
-        self.SQUARE_SIZE = 36
+        self.SQUARE_SIZE = 72  # Doubled from 36
         self.GRID_WIDTH = 8 * self.MATRIX_COLS  # 8 pixels × number of columns
         self.GRID_HEIGHT = 8 * self.MATRIX_ROWS  # 8 pixels × number of rows
         
-        # Create main frame
-        self.main_frame = tk.Frame(root)
-        self.main_frame.pack(padx=10, pady=10)
+        # Create main frame with padding and background
+        self.main_frame = tk.Frame(root, bg='#2B2B2B', padx=40, pady=40)
+        self.main_frame.pack(expand=True)
+        
+        # Create canvas frame with border effect
+        self.canvas_frame = tk.Frame(
+            self.main_frame,
+            bg='#1E1E1E',  # Darker border
+            padx=2,
+            pady=2
+        )
+        self.canvas_frame.pack()
         
         # Create canvas
         self.canvas = tk.Canvas(
-            self.main_frame,
+            self.canvas_frame,
             width=self.GRID_WIDTH * self.SQUARE_SIZE,
             height=self.GRID_HEIGHT * self.SQUARE_SIZE,
-            bg='white'
+            bg='#333333',  # Slightly lighter than background
+            highlightthickness=0  # Remove canvas border
         )
         self.canvas.pack()
         
-        # Create button frame
-        self.button_frame = tk.Frame(self.main_frame)
-        self.button_frame.pack(pady=10)
+        # Create button frame with dark theme
+        self.button_frame = tk.Frame(self.main_frame, bg='#2B2B2B')
+        self.button_frame.pack(pady=20)
+        
+        # Style for buttons
+        button_style = {
+            'bg': '#404040',
+            'fg': 'white',
+            'relief': tk.FLAT,
+            'padx': 15,
+            'pady': 8
+        }
         
         # Create reset button
         self.reset_button = tk.Button(
             self.button_frame,
             text="Reset Grid",
-            command=self.reset_grid
+            command=self.reset_grid,
+            **button_style
         )
         self.reset_button.pack(side=tk.LEFT, padx=5)
         
@@ -111,17 +132,23 @@ class PixelDrawer:
         self.save_button = tk.Button(
             self.button_frame,
             text="Save All",
-            command=self.save_all
+            command=self.save_all,
+            **button_style
         )
         self.save_button.pack(side=tk.LEFT, padx=5)
         
-        # Create orientation checkbox
+        # Create orientation checkbox with dark theme
         self.orientation_var = tk.BooleanVar(value=False)
         self.orientation_checkbox = tk.Checkbutton(
             self.button_frame,
             text="Rotate Output -90",
             variable=self.orientation_var,
-            command=self.on_orientation_change
+            command=self.on_orientation_change,
+            bg='#2B2B2B',
+            fg='white',
+            selectcolor='#404040',
+            activebackground='#2B2B2B',
+            activeforeground='white'
         )
         self.orientation_checkbox.pack(side=tk.LEFT, padx=5)
         
