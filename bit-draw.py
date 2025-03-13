@@ -210,14 +210,18 @@ class PixelDrawer:
             pady=20
         ).pack()
         
+        # Create container frame for gallery canvas and scrollbar
+        gallery_container = tk.Frame(self.gallery_frame, bg='#2B2B2B', pady=0)
+        gallery_container.pack(expand=True, fill=tk.BOTH)
+        
         # Create scrollable frame for images
         self.gallery_canvas = tk.Canvas(
-            self.gallery_frame,
+            gallery_container,
             bg='#333333',
             highlightthickness=0
         )
         scrollbar = tk.Scrollbar(
-            self.gallery_frame,
+            gallery_container,
             orient="vertical",
             command=self.gallery_canvas.yview
         )
@@ -225,10 +229,11 @@ class PixelDrawer:
         # Configure scrolling
         self.gallery_canvas.configure(yscrollcommand=scrollbar.set)
         
-        # Create frame for image grid
+        # Create frame for image grid with bottom padding
         self.gallery_grid = tk.Frame(
             self.gallery_canvas,
-            bg='#333333'
+            bg='#333333',
+            pady=20  # Add padding at the bottom
         )
         
         # Pack scrollbar and canvas
@@ -241,6 +246,9 @@ class PixelDrawer:
             window=self.gallery_grid,
             anchor="nw"
         )
+        
+        # Add bottom padding frame
+        tk.Frame(self.gallery_frame, bg='#2B2B2B', height=40).pack(side=tk.BOTTOM)
         
         # Configure canvas scrolling
         self.gallery_grid.bind(
