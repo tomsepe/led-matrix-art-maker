@@ -13,7 +13,7 @@ i2c = board.I2C()
 # Typical addresses are 0x70, 0x71, 0x72, but verify your actual addresses
 matrix1 = Matrix8x8(i2c, address=0x72)  # Right matrix
 matrix2 = Matrix8x8(i2c, address=0x71)  # Middle matrix
-matrix3 = Matrix8x8(i2c, address=0x70)  # Left matrix
+matrix3 = Matrix8x8(i2c, address=0x70)  # Left matrix 
 
 # Set brightness for all matrices (0.0 to 1.0)
 BRIGHTNESS = 0.5
