@@ -8,6 +8,9 @@ from patterns.led_patterns import PATTERNS
 
 # Initialize I2C
 i2c = board.I2C()
+i2c.try_lock()
+i2c.configure(frequency=400000)  # Set to 400kHz (fast mode)
+i2c.unlock()
 
 # Create three matrix objects with different I2C addresses
 # Typical addresses are 0x70, 0x71, 0x72, but verify your actual addresses
