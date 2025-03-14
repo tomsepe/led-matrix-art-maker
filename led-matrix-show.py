@@ -26,9 +26,9 @@ def display_pattern(matrix, pattern_data):
     try:
         # Clear the matrix first
         matrix.fill(0)
-        # Set each row directly using the byte values
+        # Set each row using fill_row
         for row, byte_val in enumerate(pattern_data):
-            matrix.row[row] = byte_val
+            matrix.fill_row(row, byte_val)
         matrix.show()
         return True
     except Exception as e:
