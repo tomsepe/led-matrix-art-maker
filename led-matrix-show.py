@@ -26,12 +26,9 @@ def display_pattern(matrix, pattern_data):
     try:
         # Clear the matrix first
         matrix.fill(0)
-        # Display each row of the pattern
+        # Set each row directly using the byte values
         for row, byte_val in enumerate(pattern_data):
-            # Convert each bit in the byte to pixels
-            for col in range(8):
-                pixel_val = (byte_val >> (7 - col)) & 1
-                matrix[col, row] = pixel_val
+            matrix.row[row] = byte_val
         matrix.show()
         return True
     except Exception as e:
