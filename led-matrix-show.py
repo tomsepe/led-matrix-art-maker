@@ -24,8 +24,14 @@ for matrix in [matrix1, matrix2, matrix3]:
 def display_pattern(matrix, pattern_data):
     """Display an 8x8 pattern on a single matrix"""
     try:
-        # Set all pixels in one operation using the matrix buffer
-        matrix.pixel_buffer = pattern_data
+        # Clear the matrix first
+        matrix.fill(0)
+        # Display each row of the pattern
+        for row, byte_val in enumerate(pattern_data):
+            # Convert each bit in the byte to pixels
+            for col in range(8):
+                pixel_val = (byte_val >> (7 - col)) & 1
+                matrix[col, row] = pixel_val
         matrix.show()
         return True
     except Exception as e:
@@ -71,7 +77,7 @@ def display_random_patterns():
                 # Set next change time
                 next_change[i] = current_time + display_time
         
-        time.sleep(0.01)  # Reduced delay to 10ms for more responsive updates
+        time.sleep(0.1)  # Small delay to prevent busy-waiting
 
 def main():
     print("Starting LED Matrix Display...")
