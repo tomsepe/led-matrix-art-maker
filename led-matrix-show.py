@@ -8,9 +8,6 @@ from patterns.led_patterns import PATTERNS
 
 # Initialize I2C
 i2c = board.I2C()
-i2c.try_lock()
-i2c.configure(frequency=400000)  # Set to 400kHz (fast mode)
-i2c.unlock()
 
 # Create three matrix objects with different I2C addresses
 # Typical addresses are 0x70, 0x71, 0x72, but verify your actual addresses
@@ -27,12 +24,10 @@ for matrix in [matrix1, matrix2, matrix3]:
 def display_pattern(matrix, pattern_data):
     """Display an 8x8 pattern on a single matrix"""
     try:
-        # Display each row of the pattern
+        # Set all pixels first, then show at once
         for row, byte_val in enumerate(pattern_data):
-            # Convert each bit in the byte to pixels
             for col in range(8):
                 matrix[col, row] = (byte_val >> (7 - col)) & 1
-        matrix.show()
         return True
     except Exception as e:
         print(f"Error displaying pattern: {e}")
@@ -47,6 +42,7 @@ def display_random_patterns():
     matrices = [matrix1, matrix2, matrix3]
     display_times = [1, 2, 3, 4, 5]  # Possible display durations in seconds
     next_change = [0, 0, 0]  # Next change time for each matrix
+    current_patterns = [None, None, None]  # Track current patterns
     
     print("Displaying random patterns. Press Ctrl+C to exit.")
     
@@ -58,6 +54,7 @@ def display_random_patterns():
             continue
         
         current_time = time.time()
+        update_needed = False
         
         # Check each matrix
         for i, matrix in enumerate(matrices):
@@ -71,13 +68,20 @@ def display_random_patterns():
                     pattern_data = PATTERNS[pattern_name]
                     if display_pattern(matrix, pattern_data):
                         print(f"Matrix {i+1}: Displaying {pattern_name} for {display_time}s")
+                        current_patterns[i] = pattern_name
+                        update_needed = True
                 except Exception as e:
                     print(f"Error with pattern {pattern_name}: {e}")
                 
                 # Set next change time
                 next_change[i] = current_time + display_time
         
-        time.sleep(0.1)  # Small delay to prevent busy-waiting
+        # Show all updates at once
+        if update_needed:
+            for matrix in matrices:
+                matrix.show()
+        
+        time.sleep(0.05)  # Reduced delay for more responsive updates
 
 def main():
     print("Starting LED Matrix Display...")
