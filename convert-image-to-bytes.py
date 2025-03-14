@@ -57,13 +57,13 @@ def image_to_pattern(image_path):
         return None
 
 def convert_all_images():
-    """Convert all 8x8 PNG images in images directory to pattern format"""
+    """Convert all 8x8 PNG images in image-data directory to pattern format"""
     ensure_directories()
     
     # Get all PNG files
-    image_files = glob.glob("images/pixel_art_*8x8*.png")
+    image_files = glob.glob("image-data/pixel_art_*8x8*.png")
     if not image_files:
-        print("No 8x8 image files found in 'images' directory")
+        print("No 8x8 image files found in 'image-data' directory")
         return
     
     print(f"Found {len(image_files)} images to convert")

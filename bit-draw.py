@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import simpledialog, messagebox
 from PIL import Image, ImageDraw, ImageTk
 from datetime import datetime
 import os
 
 def ensure_directories():
     """Create necessary directories if they don't exist"""
-    for directory in ['drawings', 'images']:
+    for directory in ['drawings', 'image-data']:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -183,36 +183,34 @@ class PixelDrawer:
             **button_style
         )
         self.save_button.pack(side=tk.LEFT, padx=5)
-        
-        self.orientation_var = tk.BooleanVar(value=False)
-        self.orientation_checkbox = tk.Checkbutton(
-            self.button_frame,
-            text="Rotate Output -90",
-            variable=self.orientation_var,
-            command=self.on_orientation_change,
-            bg='#2B2B2B',
-            fg='white',
-            selectcolor='#404040',
-            activebackground='#2B2B2B',
-            activeforeground='white'
-        )
-        self.orientation_checkbox.pack(side=tk.LEFT, padx=5)
 
     def create_gallery(self):
         """Create the image gallery side"""
+        # Create title frame for better padding control
+        title_frame = tk.Frame(self.gallery_frame, bg='#2B2B2B')
+        title_frame.pack(pady=20)
+        
         # Create gallery label
         tk.Label(
-            self.gallery_frame,
+            title_frame,
             text="Saved Drawings",
             font=('Arial', 14),
             bg='#2B2B2B',
-            fg='white',
-            pady=20
+            fg='white'
+        ).pack()
+        
+        # Add instruction text
+        tk.Label(
+            title_frame,
+            text="right click to remove an image",
+            font=('Arial', 9),
+            bg='#2B2B2B',
+            fg='#888888'  # Light grey color
         ).pack()
         
         # Create container frame for gallery canvas and scrollbar
-        gallery_container = tk.Frame(self.gallery_frame, bg='#2B2B2B', pady=0)
-        gallery_container.pack(expand=True, fill=tk.BOTH)
+        gallery_container = tk.Frame(self.gallery_frame, bg='#2B2B2B')
+        gallery_container.pack(expand=True, fill=tk.BOTH, pady=(0, 20))  # Add bottom padding
         
         # Create scrollable frame for images
         self.gallery_canvas = tk.Canvas(
@@ -294,7 +292,11 @@ class PixelDrawer:
                         bg='#333333'
                     )
                     label.image = photo  # Keep reference
+                    label.filename = img_file  # Store filename for deletion
                     label.pack()
+                    
+                    # Bind right-click event
+                    label.bind('<Button-3>', self.show_context_menu)
                     
                     # Update grid position
                     col += 1
@@ -307,6 +309,44 @@ class PixelDrawer:
                     
         except Exception as e:
             print(f"Error loading gallery: {e}")
+
+    def show_context_menu(self, event):
+        """Show right-click context menu for image deletion"""
+        label = event.widget
+        menu = tk.Menu(self.root, tearoff=0, bg='#404040', fg='white', 
+                      activebackground='#505050', activeforeground='white')
+        menu.add_command(label="Delete", 
+                        command=lambda: self.confirm_delete(label))
+        menu.tk_popup(event.x_root, event.y_root)
+
+    def confirm_delete(self, label):
+        """Show confirmation dialog and delete if confirmed"""
+        if messagebox.askyesno("Confirm Delete", 
+                             "Are you sure you want to delete this image?",
+                             icon='warning'):
+            try:
+                # Delete high-res image
+                hi_res_path = os.path.join('drawings', label.filename)
+                if os.path.exists(hi_res_path):
+                    os.remove(hi_res_path)
+                
+                # Delete corresponding low-res image
+                base_name = label.filename.replace('pixel_art_', '')
+                timestamp = base_name.split('.')[0]
+                low_res_files = [f for f in os.listdir('image-data') 
+                               if f.startswith(f'pixel_art_{timestamp}')]
+                
+                for low_res_file in low_res_files:
+                    low_res_path = os.path.join('image-data', low_res_file)
+                    if os.path.exists(low_res_path):
+                        os.remove(low_res_path)
+                
+                # Refresh gallery
+                self.clear_gallery()
+                self.load_gallery_images()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete image: {e}")
 
     def create_grid(self):
         for row in range(self.GRID_HEIGHT):
@@ -419,14 +459,11 @@ class PixelDrawer:
         
         # Save images with timestamp
         hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
-        low_res_filename = f"images/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
+        low_res_filename = f"image-data/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
         
         hi_res_image.save(hi_res_filename)
         low_res_image.save(low_res_filename)
         print(f"Drawings saved as {hi_res_filename} and {low_res_filename}")
-
-    def on_orientation_change(self):
-        pass
 
     def reset_grid(self):
         # Set all squares back to black
