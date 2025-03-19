@@ -17,6 +17,12 @@
             color: #ffffff;
         }
 
+        .main-container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
         .container {
             background: #333333;
             padding: 20px;
@@ -109,16 +115,103 @@
             color: #ffffff;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
+
+        .gallery {
+            background: #333333;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .gallery-title {
+            margin: 0 0 20px 0;
+            font-size: 1.2em;
+            color: #ffffff;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            background: #1E1E1E;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 2px;
+        }
+
+        .gallery-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(244, 67, 54, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            line-height: 20px;
+            padding: 0;
+            cursor: pointer;
+            display: none;
+        }
+
+        .gallery-item:hover .delete-btn {
+            display: block;
+        }
+
+        /* Scrollbar styling */
+        .gallery::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .gallery::-webkit-scrollbar-track {
+            background: #1E1E1E;
+            border-radius: 4px;
+        }
+
+        .gallery::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .gallery::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
     </style>
 </head>
 <body>
     <h1>LED Matrix Art Maker</h1>
-    <div class="container">
-        <div class="grid" id="led-grid"></div>
-        <div class="colors" id="color-picker"></div>
-        <div class="controls">
-            <button class="export" onclick="exportMatrix()">Export</button>
-            <button class="reset" onclick="resetMatrix()">Reset</button>
+    <div class="main-container">
+        <div class="container">
+            <div class="grid" id="led-grid"></div>
+            <div class="colors" id="color-picker"></div>
+            <div class="controls">
+                <button class="export" onclick="exportMatrix()">Export</button>
+                <button class="export" onclick="saveAsImage()">Save Image</button>
+                <button class="reset" onclick="resetMatrix()">Reset</button>
+            </div>
+        </div>
+        <div class="gallery">
+            <h2 class="gallery-title">Saved Drawings</h2>
+            <div class="gallery-grid" id="gallery-grid"></div>
         </div>
     </div>
 
@@ -202,6 +295,64 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+        }
+
+        function saveAsImage() {
+            const canvas = document.createElement('canvas');
+            const scale = 2; // Scale for higher resolution
+            canvas.width = MATRIX_SIZE * 40 * scale;
+            canvas.height = MATRIX_SIZE * 40 * scale;
+            const ctx = canvas.getContext('2d');
+
+            // Fill background
+            ctx.fillStyle = '#1E1E1E';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw LEDs
+            matrix.forEach((row, rowIndex) => {
+                row.forEach((led, colIndex) => {
+                    ctx.fillStyle = led.on ? led.color : '#1E1E1E';
+                    const x = colIndex * 40 * scale;
+                    const y = rowIndex * 40 * scale;
+                    const size = 38 * scale; // Slightly smaller than cell for spacing
+                    ctx.fillRect(x + scale, y + scale, size, size);
+                });
+            });
+
+            // Save the canvas as PNG
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pixel-art-${timestamp}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                addToGallery(url);
+            });
+        }
+
+        function addToGallery(imageUrl) {
+            const galleryGrid = document.getElementById('gallery-grid');
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                item.remove();
+            };
+            
+            item.appendChild(img);
+            item.appendChild(deleteBtn);
+            galleryGrid.insertBefore(item, galleryGrid.firstChild);
         }
 
         function resetMatrix() {
