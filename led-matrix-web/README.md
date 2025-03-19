@@ -2,6 +2,14 @@
 
 A simple, browser-based tool for creating 8x8 LED matrix art. Perfect for designing patterns for LED matrix displays.
 
+## Setup
+
+1. Create a `web-drawings` folder in the same directory as `index.html`:
+   ```bash
+   mkdir web-drawings
+   ```
+2. Ensure the `web-drawings` folder has proper read/write permissions
+
 ## Features
 
 - 8x8 LED grid
@@ -32,9 +40,9 @@ A simple, browser-based tool for creating 8x8 LED matrix art. Perfect for design
    - Click the "Save Image" button
    - When the browser's save dialog appears, right-click on the image
    - Select "Save image as..."
-   - Navigate to your desired save location (e.g., a 'drawings' folder)
+   - **Important:** Save to the 'web-drawings' folder in your LED Matrix Art Maker directory
    - Click Save
-   - The image will appear in the gallery once saved in the correct location
+   - Refresh the page to see your image in the gallery
 6. View your saved designs in the gallery on the right
 7. Hover over gallery images to reveal delete button
 8. Use the Reset button to clear the grid
