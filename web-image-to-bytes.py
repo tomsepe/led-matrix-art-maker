@@ -31,15 +31,15 @@ def process_web_image(image_path):
         new_filename = f"pixel_art_{timestamp}_8x8.png"
         new_path = os.path.join("image-data", new_filename)
         
-        # Resize to 8x8
-        # Using NEAREST neighbor resampling to preserve sharp edges
+        # Convert to grayscale first to remove color information
+        image = image.convert('L')
+        
+        # Convert to pure black and white (binary) using a threshold
+        # Any pixel > 127 becomes white (255), anything else becomes black (0)
+        image = image.point(lambda x: 255 if x > 127 else 0, '1')
+        
+        # Now resize to 8x8 using nearest neighbor to maintain sharp edges
         small_image = image.resize((8, 8), Image.NEAREST)
-        
-        # Convert to black and white
-        small_image = small_image.convert('L')
-        
-        # Threshold to pure black and white
-        small_image = small_image.point(lambda x: 255 if x > 127 else 0, '1')
         
         # Save the processed image
         small_image.save(new_path)
