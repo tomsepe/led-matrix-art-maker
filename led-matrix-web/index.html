@@ -312,7 +312,7 @@
                         2. Follow the instructions in the pop-up window
                     </span>
                 </button>
-                <button class="reset" onclick="resetMatrix()">Reset</button>
+                <button class="reset" onclick="resetMatrix()">Reset Matrix</button>
             </div>
         </div>
         <div class="gallery">
@@ -335,6 +335,7 @@
         ];
 
         let selectedColor = COLORS[0].value;
+        let currentDrawingColor = null;  // Track the color being used in the current drawing
         let matrix = Array(MATRIX_SIZE).fill().map(() => 
             Array(MATRIX_SIZE).fill().map(() => ({ on: false, color: '#FFFFFF' }))
         );
@@ -357,11 +358,17 @@
             button.className = 'color-button';
             button.style.backgroundColor = color.value;
             button.onclick = () => {
-                selectedColor = color.value;
-                document.querySelectorAll('.color-button').forEach(btn => 
-                    btn.classList.remove('selected')
-                );
-                button.classList.add('selected');
+                // Only allow color change if no drawing has started or grid is empty
+                if (!currentDrawingColor || !hasAnyLEDOn()) {
+                    selectedColor = color.value;
+                    currentDrawingColor = color.value;
+                    document.querySelectorAll('.color-button').forEach(btn => 
+                        btn.classList.remove('selected')
+                    );
+                    button.classList.add('selected');
+                } else {
+                    alert('Cannot change color while drawing. Please reset the grid first.');
+                }
             };
             if (color.value === selectedColor) {
                 button.classList.add('selected');
@@ -369,10 +376,17 @@
             colorPicker.appendChild(button);
         });
 
+        function hasAnyLEDOn() {
+            return matrix.some(row => row.some(led => led.on));
+        }
+
         function toggleLED(row, col) {
             const led = matrix[row][col];
+            if (!currentDrawingColor && !led.on) {
+                currentDrawingColor = selectedColor;
+            }
             led.on = !led.on;
-            led.color = led.on ? selectedColor : '#FFFFFF';
+            led.color = led.on ? currentDrawingColor : '#FFFFFF';
             updateDisplay();
         }
 
@@ -514,6 +528,7 @@
             matrix = Array(MATRIX_SIZE).fill().map(() => 
                 Array(MATRIX_SIZE).fill().map(() => ({ on: false, color: '#FFFFFF' }))
             );
+            currentDrawingColor = null;  // Reset the current drawing color
             updateDisplay();
         }
     </script>
