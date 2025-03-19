@@ -192,27 +192,6 @@
             border-radius: 2px;
         }
 
-        .gallery-item .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(244, 67, 54, 0.8);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            line-height: 20px;
-            padding: 0;
-            cursor: pointer;
-            display: none;
-        }
-
-        .gallery-item:hover .delete-btn {
-            display: block;
-        }
-
         /* Scrollbar styling */
         .gallery::-webkit-scrollbar {
             width: 8px;
@@ -249,12 +228,14 @@
         .modal-content {
             background: #333;
             padding: 20px;
+            padding-top: 100px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
             text-align: center;
             max-width: 90%;
             max-height: 90%;
             overflow: auto;
+            position: relative;
         }
 
         .modal-content img {
@@ -269,19 +250,20 @@
 
         .close-modal {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 40px;
+            left: 40px;
             background: #f44336;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 18px;
+            width: 120px;
+            height: 120px;
+            font-size: 72px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 1;
         }
 
         .save-instructions {
@@ -317,7 +299,6 @@
             <div class="grid" id="led-grid"></div>
             <div class="colors" id="color-picker"></div>
             <div class="controls">
-                <button class="export" onclick="exportMatrix()">Export</button>
                 <button class="export save-btn" onclick="saveAsImage()">
                     Save Image
                     <span class="tooltip">
@@ -401,92 +382,76 @@
             });
         }
 
-        function exportMatrix() {
-            const data = {
-                matrix,
-                timestamp: new Date().toISOString(),
-                size: MATRIX_SIZE
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `led-matrix-${data.timestamp}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
         // Load images from web-drawings directory
         async function loadGalleryImages() {
             const galleryGrid = document.getElementById('gallery-grid');
             galleryGrid.innerHTML = ''; // Clear existing images
-            
+
             try {
+                // Fetch the directory listing
                 const response = await fetch('web-drawings/');
                 const text = await response.text();
+                
+                // Parse the directory listing HTML
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(text, 'text/html');
                 
-                // Get all file entries and their dates
-                const fileEntries = Array.from(doc.querySelectorAll('a'))
-                    .map(a => {
-                        const filename = a.textContent;
-                        // Get the date from the parent tr element's date column
-                        const row = a.closest('tr');
-                        const dateStr = row ? row.querySelector('td:nth-child(3)') : null;
-                        const date = dateStr ? new Date(dateStr.textContent) : new Date(0);
-                        return { filename, date };
-                    })
-                    .filter(entry => entry.filename.endsWith('.png'))
-                    .sort((a, b) => b.date - a.date); // Sort by date, newest first
+                // Get all PNG files with their modification dates
+                const pngFiles = [];
+                const links = Array.from(doc.querySelectorAll('a'))
+                    .filter(link => link.textContent.trim().toLowerCase().endsWith('.png'));
 
-                fileEntries.forEach(entry => {
-                    if (entry.filename === 'index.html' || entry.filename === '.' || entry.filename === '..') return;
-                    
+                // Get modification dates for each PNG file
+                for (const link of links) {
+                    const filename = link.textContent.trim();
+                    try {
+                        const fileResponse = await fetch(`web-drawings/${filename}`);
+                        const lastModified = fileResponse.headers.get('last-modified');
+                        pngFiles.push({
+                            filename,
+                            modDate: lastModified ? new Date(lastModified) : new Date()
+                        });
+                    } catch (err) {
+                        console.error(`Error getting date for ${filename}:`, err);
+                        pngFiles.push({
+                            filename,
+                            modDate: new Date()
+                        });
+                    }
+                }
+
+                if (pngFiles.length === 0) {
+                    const noImagesMsg = document.createElement('div');
+                    noImagesMsg.style.padding = '20px';
+                    noImagesMsg.style.color = '#888';
+                    noImagesMsg.innerHTML = 'No images yet. Click "Save Image" to add some!';
+                    galleryGrid.appendChild(noImagesMsg);
+                    return;
+                }
+
+                // Sort files by modification date (newest first)
+                pngFiles.sort((a, b) => b.modDate - a.modDate);
+
+                // Display each image
+                pngFiles.forEach(file => {
                     const item = document.createElement('div');
                     item.className = 'gallery-item';
                     
                     const img = document.createElement('img');
-                    img.src = `web-drawings/${entry.filename}`; // Use relative path
-                    
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-btn';
-                    deleteBtn.innerHTML = '×';
-                    deleteBtn.onclick = async (e) => {
-                        e.stopPropagation();
-                        if (confirm('Are you sure you want to delete this image?')) {
-                            try {
-                                await fetch(`web-drawings/${entry.filename}`, { method: 'DELETE' });
-                                item.remove();
-                            } catch (error) {
-                                console.error('Error deleting file:', error);
-                                alert('Error deleting file. Please try again.');
-                            }
-                        }
-                    };
+                    img.src = `web-drawings/${file.filename}`;
+                    img.alt = file.filename;
                     
                     item.appendChild(img);
-                    item.appendChild(deleteBtn);
                     galleryGrid.appendChild(item);
                 });
-
-                // Show message if no images found
-                if (fileEntries.length === 0) {
-                    const noImagesMsg = document.createElement('div');
-                    noImagesMsg.style.padding = '20px';
-                    noImagesMsg.style.color = '#888';
-                    noImagesMsg.textContent = 'No images yet. Save some designs to see them here!';
-                    galleryGrid.appendChild(noImagesMsg);
-                }
             } catch (error) {
                 console.error('Error loading gallery:', error);
                 const errorMsg = document.createElement('div');
                 errorMsg.style.padding = '20px';
                 errorMsg.style.color = '#ff6b6b';
-                errorMsg.textContent = 'Please create a "web-drawings" folder and ensure it has proper permissions.';
+                errorMsg.innerHTML = 'To view the gallery, please run:<br><br>' +
+                    '<code>python -m http.server</code><br><br>' +
+                    'Then open <a href="http://localhost:8000" style="color: #2196F3">http://localhost:8000</a>';
                 galleryGrid.appendChild(errorMsg);
             }
         }
