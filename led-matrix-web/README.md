@@ -28,7 +28,13 @@ A simple, browser-based tool for creating 8x8 LED matrix art. Perfect for design
 2. Click on grid squares to toggle LEDs on/off
 3. Select colors from the color palette below the grid
 4. Use the Export button to save your design as a JSON file
-5. Use the Save Image button to save your design as a PNG file
+5. To save your design as an image:
+   - Click the "Save Image" button
+   - When the browser's save dialog appears, right-click on the image
+   - Select "Save image as..."
+   - Navigate to your desired save location (e.g., a 'drawings' folder)
+   - Click Save
+   - The image will appear in the gallery once saved in the correct location
 6. View your saved designs in the gallery on the right
 7. Hover over gallery images to reveal delete button
 8. Use the Reset button to clear the grid

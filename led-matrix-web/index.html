@@ -84,6 +84,41 @@
         .controls {
             display: flex;
             gap: 10px;
+            position: relative;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            background-color: #555;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1;
+        }
+
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .save-btn:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
         }
 
         button {
@@ -205,7 +240,16 @@
             <div class="colors" id="color-picker"></div>
             <div class="controls">
                 <button class="export" onclick="exportMatrix()">Export</button>
-                <button class="export" onclick="saveAsImage()">Save Image</button>
+                <button class="export save-btn" onclick="saveAsImage()">
+                    Save Image
+                    <span class="tooltip">
+                        To save in a specific folder:
+                        1. Click this button
+                        2. Right-click on the image
+                        3. Choose "Save image as..."
+                        4. Select your desired folder
+                    </span>
+                </button>
                 <button class="reset" onclick="resetMatrix()">Reset</button>
             </div>
         </div>
@@ -319,18 +363,60 @@
                 });
             });
 
-            // Save the canvas as PNG
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            // Create a temporary link and open image in new tab for better save control
             canvas.toBlob(blob => {
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `pixel-art-${timestamp}.png`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                addToGallery(url);
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                
+                // Open image in new tab for better save control
+                const newTab = window.open();
+                newTab.document.write(`
+                    <html>
+                        <head>
+                            <title>Save LED Matrix Art</title>
+                            <style>
+                                body {
+                                    margin: 0;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    justify-content: center;
+                                    min-height: 100vh;
+                                    background: #2B2B2B;
+                                    color: white;
+                                    font-family: Arial, sans-serif;
+                                }
+                                .instructions {
+                                    margin: 20px;
+                                    padding: 20px;
+                                    background: #333;
+                                    border-radius: 8px;
+                                    text-align: center;
+                                }
+                                img {
+                                    border: 2px solid #444;
+                                    border-radius: 4px;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="instructions">
+                                <h3>To save your LED Matrix Art:</h3>
+                                <p>1. Right-click on the image below</p>
+                                <p>2. Select "Save image as..."</p>
+                                <p>3. Choose your desired save location</p>
+                                <p>4. Click Save</p>
+                            </div>
+                            <img src="${url}" alt="LED Matrix Art">
+                        </body>
+                    </html>
+                `);
+                newTab.document.close();
+                
+                // Clean up the URL after the tab is closed
+                newTab.onbeforeunload = () => {
+                    URL.revokeObjectURL(url);
+                };
             });
         }
 
