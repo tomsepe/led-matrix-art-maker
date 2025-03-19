@@ -1,13 +1,215 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Matrix Art Maker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #2B2B2B;
+            color: #ffffff;
+        }
+
+        .container {
+            background: #333333;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #1E1E1E;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .led {
+            width: 40px;
+            height: 40px;
+            background-color: #1E1E1E;
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .led:hover {
+            transform: scale(1.1);
+        }
+
+        .colors {
+            display: grid;
+            grid-template-columns: repeat(7, 40px);
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #1E1E1E;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .color-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .color-button:hover {
+            transform: scale(1.1);
+        }
+
+        .color-button.selected {
+            border: 2px solid #2196F3;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .export {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .reset {
+            background-color: #f44336;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>LED Matrix Art Maker</h1>
+    <div class="container">
+        <div class="grid" id="led-grid"></div>
+        <div class="colors" id="color-picker"></div>
+        <div class="controls">
+            <button class="export" onclick="exportMatrix()">Export</button>
+            <button class="reset" onclick="resetMatrix()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const MATRIX_SIZE = 8;
+        const COLORS = [
+            { label: 'White', value: '#FFFFFF' },
+            { label: 'Red', value: '#FF0000' },
+            { label: 'Green', value: '#00FF00' },
+            { label: 'Blue', value: '#0000FF' },
+            { label: 'Yellow', value: '#FFFF00' },
+            { label: 'Orange', value: '#FF8C00' },
+            { label: 'Pink', value: '#FF00FF' }
+        ];
+
+        let selectedColor = COLORS[0].value;
+        let matrix = Array(MATRIX_SIZE).fill().map(() => 
+            Array(MATRIX_SIZE).fill().map(() => ({ on: false, color: '#FFFFFF' }))
+        );
+
+        // Initialize the LED grid
+        const grid = document.getElementById('led-grid');
+        for (let row = 0; row < MATRIX_SIZE; row++) {
+            for (let col = 0; col < MATRIX_SIZE; col++) {
+                const led = document.createElement('div');
+                led.className = 'led';
+                led.onclick = () => toggleLED(row, col);
+                grid.appendChild(led);
+            }
+        }
+
+        // Initialize the color picker
+        const colorPicker = document.getElementById('color-picker');
+        COLORS.forEach(color => {
+            const button = document.createElement('button');
+            button.className = 'color-button';
+            button.style.backgroundColor = color.value;
+            button.onclick = () => {
+                selectedColor = color.value;
+                document.querySelectorAll('.color-button').forEach(btn => 
+                    btn.classList.remove('selected')
+                );
+                button.classList.add('selected');
+            };
+            if (color.value === selectedColor) {
+                button.classList.add('selected');
+            }
+            colorPicker.appendChild(button);
+        });
+
+        function toggleLED(row, col) {
+            const led = matrix[row][col];
+            led.on = !led.on;
+            led.color = led.on ? selectedColor : '#FFFFFF';
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const leds = document.querySelectorAll('.led');
+            matrix.forEach((row, rowIndex) => {
+                row.forEach((led, colIndex) => {
+                    const index = rowIndex * MATRIX_SIZE + colIndex;
+                    leds[index].style.backgroundColor = led.on ? led.color : '#1E1E1E';
+                });
+            });
+        }
+
+        function exportMatrix() {
+            const data = {
+                matrix,
+                timestamp: new Date().toISOString(),
+                size: MATRIX_SIZE
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `led-matrix-${data.timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function resetMatrix() {
+            matrix = Array(MATRIX_SIZE).fill().map(() => 
+                Array(MATRIX_SIZE).fill().map(() => ({ on: false, color: '#FFFFFF' }))
+            );
+            updateDisplay();
+        }
+    </script>
+</body>
 </html>

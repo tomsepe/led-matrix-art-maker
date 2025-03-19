@@ -1,54 +1,75 @@
-# React + TypeScript + Vite
+# LED Matrix Art Maker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A simple, browser-based tool for creating 8x8 LED matrix art. Perfect for designing patterns for LED matrix displays.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 8x8 LED grid
+- 7 color options:
+  - White
+  - Red
+  - Green
+  - Blue
+  - Yellow
+  - Orange
+  - Pink
+- Click to toggle LEDs on/off
+- Export designs as JSON
+- Reset functionality
+- Dark theme interface
+- No installation required
 
-## Expanding the ESLint configuration
+## Usage
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. Simply open `index.html` in any modern web browser
+2. Click on grid squares to toggle LEDs on/off
+3. Select colors from the color palette below the grid
+4. Use the Export button to save your design as a JSON file
+5. Use the Reset button to clear the grid
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
+## Running Locally
+
+You can run this app in several ways:
+
+1. **Direct File Opening:**
+   - Simply double-click the `index.html` file to open in your browser
+
+2. **Using Python's HTTP Server:**
+   ```bash
+   python -m http.server 3000
+   ```
+   Then visit `http://localhost:3000`
+
+3. **Using any other static file server:**
+   - Node's `http-server`
+   - PHP's built-in server
+   - Any web server (Apache, Nginx, etc.)
+
+## Export Format
+
+The exported JSON file contains:
+```json
+{
+  "matrix": [
+    [{"on": false, "color": "#FFFFFF"}, ...],
+    ...
   ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+  "timestamp": "2024-03-19T18:00:00.000Z",
+  "size": 8
+}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Sharing
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+To share this tool with others:
+1. Send them the `index.html` file
+2. Host it on any static file hosting service (GitHub Pages, Netlify, etc.)
+3. They can open it directly in their browser without installing anything
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Browser Compatibility
+
+Works in all modern browsers:
+- Chrome
+- Firefox
+- Safari
+- Edge
