@@ -161,9 +161,15 @@
         }
 
         .gallery-title {
-            margin: 0 0 20px 0;
+            margin: 0 0 10px 0;
             font-size: 1.2em;
             color: #ffffff;
+        }
+
+        .gallery-instructions {
+            margin: 0 0 20px 0;
+            font-size: 0.8em;
+            color: #888888;
         }
 
         .gallery-grid {
@@ -174,8 +180,7 @@
 
         .gallery-item {
             position: relative;
-            background: #1E1E1E;
-            padding: 10px;
+            padding: 0;
             border-radius: 4px;
             cursor: pointer;
             transition: transform 0.2s;
@@ -189,7 +194,7 @@
         .gallery-item img {
             width: 100%;
             height: auto;
-            border-radius: 2px;
+            border-radius: 4px;
         }
 
         /* Scrollbar styling */
@@ -287,7 +292,7 @@
                 <h3>Save Your LED Matrix Art</h3>
                 <p>1. Right-click on the image below</p>
                 <p>2. Select "Save image as..."</p>
-                <p class="important">3. Navigate to and select the 'web-drawings' folder</p>
+                <p class="important">3. Navigate to and select the 'web-drawings' folder in the 'led-matrix-web' directory</p>
                 <p>4. Click Save</p>
                 <p>5. Close this window when done</p>
             </div>
@@ -304,9 +309,7 @@
                     <span class="tooltip">
                         To save your design:
                         1. Click this button
-                        2. Right-click on the image
-                        3. Choose "Save image as..."
-                        4. Select the 'web-drawings' folder
+                        2. Follow the instructions in the pop-up window
                     </span>
                 </button>
                 <button class="reset" onclick="resetMatrix()">Reset</button>
@@ -314,6 +317,7 @@
         </div>
         <div class="gallery">
             <h2 class="gallery-title">Saved Drawings</h2>
+            <p class="gallery-instructions">To delete images, manually remove them from the 'web-drawings' folder</p>
             <div class="gallery-grid" id="gallery-grid"></div>
         </div>
     </div>
