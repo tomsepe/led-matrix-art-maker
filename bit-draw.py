@@ -67,8 +67,8 @@ class PixelDrawer:
         self.root.title("Pixel Drawer")
         self.root.configure(bg='#2B2B2B')  # Dark grey background
         
-        # Set minimum window size (doubled width)
-        self.root.minsize(1600, 600)
+        # Set minimum window size (significantly reduced)
+        self.root.minsize(1400, 600)
         
         # Get matrix configuration
         config_dialog = MatrixConfigDialog(root)
@@ -92,10 +92,11 @@ class PixelDrawer:
         
         # Left side - Pixel Editor
         self.editor_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
-        self.editor_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+        self.editor_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH, padx=(0, 20))  # Reduced right padding
         
         # Right side - Image Gallery (with fixed width)
-        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B', width=620)  # Reduced from ~800
+        # Increased width to 700 to accommodate padding while maintaining ~600px content width
+        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B', width=700, padx=40)
         self.gallery_frame.pack(side=tk.LEFT, fill=tk.BOTH)
         self.gallery_frame.pack_propagate(False)  # Prevent frame from shrinking to content
         
@@ -124,14 +125,14 @@ class PixelDrawer:
     def create_editor(self):
         """Create the pixel editor side"""
         # Create spacer frame for top padding
-        tk.Frame(self.editor_frame, bg='#2B2B2B', height=80).pack()
+        tk.Frame(self.editor_frame, bg='#2B2B2B', height=20).pack()  # Reduced from 40
         
         # Create canvas frame with border effect
         self.canvas_frame = tk.Frame(
             self.editor_frame,
             bg='#1E1E1E',
-            padx=2,
-            pady=2
+            padx=1,  # Reduced from 2
+            pady=1   # Reduced from 2
         )
         self.canvas_frame.pack(expand=True)
         
@@ -139,8 +140,8 @@ class PixelDrawer:
         self.canvas_padding = tk.Frame(
             self.canvas_frame,
             bg='#333333',
-            padx=50,
-            pady=50
+            padx=15,  # Reduced from 30
+            pady=15   # Reduced from 30
         )
         self.canvas_padding.pack(expand=True)
         
@@ -156,7 +157,7 @@ class PixelDrawer:
         
         # Create button frame with dark theme
         self.button_frame = tk.Frame(self.editor_frame, bg='#2B2B2B')
-        self.button_frame.pack(pady=40)
+        self.button_frame.pack(pady=20)  # Reduced from 40
         
         # Style for buttons
         button_style = {
@@ -208,9 +209,9 @@ class PixelDrawer:
             fg='#888888'  # Light grey color
         ).pack()
         
-        # Create container frame for gallery canvas and scrollbar
-        gallery_container = tk.Frame(self.gallery_frame, bg='#2B2B2B')
-        gallery_container.pack(expand=True, fill=tk.BOTH, pady=(0, 20))  # Add bottom padding
+        # Create container frame for gallery canvas and scrollbar with extra padding
+        gallery_container = tk.Frame(self.gallery_frame, bg='#2B2B2B', padx=20)  # Added padding to container
+        gallery_container.pack(expand=True, fill=tk.BOTH, pady=(0, 20))
         
         # Create scrollable frame for images
         self.gallery_canvas = tk.Canvas(
@@ -227,16 +228,16 @@ class PixelDrawer:
         # Configure scrolling
         self.gallery_canvas.configure(yscrollcommand=scrollbar.set)
         
-        # Create frame for image grid with bottom padding
+        # Create frame for image grid with padding
         self.gallery_grid = tk.Frame(
             self.gallery_canvas,
             bg='#333333',
-            pady=20  # Add padding at the bottom
+            pady=20  # Bottom padding for grid
         )
         
-        # Pack scrollbar and canvas
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.gallery_canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH, padx=20)
+        # Pack scrollbar and canvas with extra padding
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 20))  # Added right padding to scrollbar
+        self.gallery_canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
         
         # Create window in canvas for the frame
         self.gallery_canvas.create_window(
@@ -244,9 +245,6 @@ class PixelDrawer:
             window=self.gallery_grid,
             anchor="nw"
         )
-        
-        # Add bottom padding frame
-        tk.Frame(self.gallery_frame, bg='#2B2B2B', height=40).pack(side=tk.BOTTOM)
         
         # Configure canvas scrolling
         self.gallery_grid.bind(
