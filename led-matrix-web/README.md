@@ -26,29 +26,32 @@ A simple, browser-based tool for creating 8x8 LED matrix art. Perfect for design
    - Both Python 2 and 3 will work, but Python 3 is recommended
 
 2. Start the server:
-   ```bash
-   # First, find where you downloaded/extracted the LED Matrix Art Maker:
-   # - The file should be named "led-matrix-web.zip"
-   # - Double-click on the file to extract it
+
+   First, find where you downloaded/extracted the LED Matrix Art Maker:
+   - The file should be named "led-matrix-web.zip"
+   - Double-click on the file to extract it
    
-   # Windows:
-   # Open File Explorer, navigate to the downloaded folder
-   # Click in the address bar at the top
-   # Type "cmd" and press Enter - this opens Command Prompt in the right location
-   # Then type:
+   **Windows:**
+   - Open File Explorer, navigate to the downloaded folder
+   - Click in the address bar at the top
+   - Type "cmd" and press Enter - this opens Command Prompt in the right location
+   - Then type:
+   ```bash
    cd led-matrix-web
    python server.py
+   ```
    
-   # macOS:
-   # Open Terminal (Cmd + Space, type "terminal", press Enter)
-   # Type "cd " (with a space after cd)
-   # Drag and drop the "led-matrix-web" folder from Finder into Terminal
-   # Press Enter
-   # Then type:
+   **macOS:**
+   - Open Terminal (Cmd + Space, type "terminal", press Enter)
+   - Type "cd " (with a space after cd)
+   - Drag and drop the "led-matrix-web" folder from Finder into Terminal
+   - Press Enter
+   - Then type:
+   ```bash
    python server.py
    ```
 
-3. The application will automatically:
+1. The application will automatically:
    - Create the `web-drawings` folder if it doesn't exist
    - Start the server at [http://localhost:8000](http://localhost:8000)
    - Open your default web browser to the application
