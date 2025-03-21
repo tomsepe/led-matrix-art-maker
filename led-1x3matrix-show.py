@@ -1,3 +1,27 @@
+"""
+LED Matrix Display Script (3x Matrix Version)
+
+This script displays pixel art patterns on three 8x8 LED matrix displays.
+It reads patterns from patterns/led_patterns.py and displays them randomly
+on each matrix independently.
+
+Features:
+- Controls three 8x8 LED matrices simultaneously
+- Each matrix displays patterns independently
+- Random pattern selection and timing (1-5 seconds)
+- Adjustable brightness (default 50%)
+- Synchronized updates across all matrices
+- Runs continuously until interrupted with Ctrl+C
+
+Hardware:
+- Uses three Adafruit HT16K33 8x8 LED Matrices
+- Connected via I2C with addresses:
+  - Left matrix: 0x70
+  - Middle matrix: 0x71
+  - Right matrix: 0x72
+- Requires adafruit-circuitpython-ht16k33 library
+"""
+
 import board
 from adafruit_ht16k33.matrix import Matrix8x8
 import os

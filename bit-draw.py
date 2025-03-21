@@ -1,3 +1,30 @@
+"""
+LED Matrix Art Maker - Pixel Drawing Tool
+
+A graphical tool for creating pixel art designs for LED matrix displays.
+Features a grid-based drawing interface with live preview and gallery view.
+
+Features:
+- Configurable matrix layout (multiple 8x8 matrices)
+- 7 LED color options (White, Red, Yellow-Green, Blue, Yellow, Green, Amber)
+- Click and drag drawing interface
+- Live gallery view of saved designs
+- High-resolution (288x288) and low-resolution (8x8) image export
+- Dark theme interface
+- Right-click to delete saved designs
+
+Output:
+- High-res images saved in 'saved-drawings' folder (288x288 PNG)
+- Low-res images saved in 'image-data' folder (8x8 PNG)
+- Images are automatically named with timestamps
+- Supports multiple matrix configurations (e.g., 1x1, 1x2, 2x1, 2x2)
+
+Dependencies:
+- Python 3.x
+- tkinter (usually included with Python)
+- Pillow (PIL) for image processing
+"""
+
 #!/usr/bin/env python3
 
 import tkinter as tk
@@ -8,7 +35,7 @@ import os
 
 def ensure_directories():
     """Create necessary directories if they don't exist"""
-    for directory in ['drawings', 'image-data']:
+    for directory in ['saved-drawings', 'image-data']:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -258,7 +285,7 @@ class PixelDrawer:
         """Load and display existing high-res images"""
         try:
             image_files = sorted(
-                [f for f in os.listdir('drawings') if f.endswith('.png')],
+                [f for f in os.listdir('saved-drawings') if f.endswith('.png')],
                 reverse=True
             )
             
@@ -267,7 +294,7 @@ class PixelDrawer:
             for img_file in image_files:
                 try:
                     # Load and resize image
-                    img_path = os.path.join('drawings', img_file)
+                    img_path = os.path.join('saved-drawings', img_file)
                     img = Image.open(img_path)
                     img.thumbnail((120, 120))  # Smaller thumbnails for four columns
                     
@@ -324,7 +351,7 @@ class PixelDrawer:
                              icon='warning'):
             try:
                 # Delete high-res image
-                hi_res_path = os.path.join('drawings', label.filename)
+                hi_res_path = os.path.join('saved-drawings', label.filename)
                 if os.path.exists(hi_res_path):
                     os.remove(hi_res_path)
                 
@@ -456,7 +483,7 @@ class PixelDrawer:
                 low_res_draw.rectangle([lx1, ly1, lx2, ly2], fill=color)
         
         # Save images with timestamp
-        hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
+        hi_res_filename = f"saved-drawings/pixel_art_{timestamp}.png"
         low_res_filename = f"image-data/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
         
         hi_res_image.save(hi_res_filename)

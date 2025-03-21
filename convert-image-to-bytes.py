@@ -1,3 +1,31 @@
+"""
+LED Matrix Pattern Converter
+
+Converts 8x8 pixel art images into binary patterns for LED matrix displays.
+Reads PNG files from the image-data directory and generates a Python module
+with binary patterns that can be used by the LED matrix display scripts.
+
+Features:
+- Processes 8x8 PNG images from image-data directory
+- Converts images to pure black and white (threshold at 127)
+- Generates binary patterns (1 = LED on, 0 = LED off)
+- Creates a Python module with all patterns in a dictionary
+- Maintains original image names as pattern keys
+
+Input:
+- 8x8 PNG files in image-data directory
+- Files must be named 'pixel_art_*8x8*.png'
+
+Output:
+- patterns/led_patterns.py containing a PATTERNS dictionary
+- Each pattern is stored as a bytes object
+- Binary format: 8 bytes, one per row, MSB first
+
+Dependencies:
+- Python 3.x
+- Pillow (PIL) for image processing
+"""
+
 #!/usr/bin/env python3
 
 from PIL import Image
