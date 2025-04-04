@@ -20,7 +20,7 @@ venv\Scripts\activate
 pip install pillow
 ```
 
-## Raspberry Pi Setup (for led-matrix-show.py)
+## Raspberry Pi Setup (for LED matrix display)
 
 This is where you'll display your pixel art on the LED matrices.
 
@@ -44,7 +44,7 @@ pip install adafruit-circuitpython-ht16k33
 python bit-draw.py
 ```
 3. Draw your 8x8 pixel art designs
-4. Save your designs - they will be stored in the `images` directory
+4. Save your designs - they will be stored in the `saved-drawings` directory
 
 ## Converting Art to Patterns
 
@@ -53,27 +53,53 @@ After creating your pixel art, convert them to LED matrix patterns:
 python convert-image-to-bytes.py
 ```
 This will:
-- Read all 8x8 PNG files from the `images` directory
+- Read all 8x8 PNG files from the `saved-drawings` directory
 - Convert them to LED matrix patterns
 - Save them in `patterns/led_patterns.py`
 
 ## Displaying on LED Matrices
 
-On your Raspberry Pi:
-```bash
-python led-matrix-show.py
-```
+The project includes several display scripts for different configurations:
 
-The display will:
-- Show random 8x8 patterns on each matrix
-- Change patterns independently at random intervals (1-5 seconds)
-- Continue until interrupted with Ctrl+C
+### Single Matrix Display
+```bash
+python led-1xmatrix-show.py
+```
+- Displays patterns on a single 8x8 LED matrix
+- Changes patterns every 1-5 seconds
+- Runs until interrupted with Ctrl+C
+
+### Three Matrix Display
+```bash
+python led-1x3matrix-show.py
+```
+- Displays patterns on three 8x8 LED matrices
+- Each matrix changes patterns independently
+- Changes patterns every 1-5 seconds
+- Runs until interrupted with Ctrl+C
+
+### Fast Display (Experimental)
+```bash
+python fast.py
+```
+- Optimized version for faster pattern updates
+- Uses more efficient pixel setting methods
+- Suitable for both single and multiple matrix setups
 
 ## Hardware Setup
 
-The script expects three 8x8 LED matrices connected via I2C with addresses:
+### Single Matrix Setup
+- Connect one 8x8 LED matrix via I2C
+- Default address: 0x70
+
+### Three Matrix Setup
+Connect three 8x8 LED matrices via I2C with addresses:
 - Left matrix: 0x70
 - Middle matrix: 0x71
 - Right matrix: 0x72
 
-Display brightness is set to 50% by default and can be adjusted in the script.
+### General Notes
+- All matrices use maximum brightness (1.0) for optimal visibility
+- I2C must be enabled on your Raspberry Pi
+- Ensure proper power supply for the LED matrices
+- Check I2C addresses match your hardware configuration
