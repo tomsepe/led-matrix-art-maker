@@ -1,14 +1,41 @@
+"""
+LED Matrix Art Maker - Pixel Drawing Tool
+
+A graphical tool for creating pixel art designs for LED matrix displays.
+Features a grid-based drawing interface with live preview and gallery view.
+
+Features:
+- Configurable matrix layout (multiple 8x8 matrices)
+- 7 LED color options (White, Red, Yellow-Green, Blue, Yellow, Green, Amber)
+- Click and drag drawing interface
+- Live gallery view of saved designs
+- High-resolution (288x288) and low-resolution (8x8) image export
+- Dark theme interface
+- Right-click to delete saved designs
+
+Output:
+- High-res images saved in 'saved-drawings' folder (288x288 PNG)
+- Low-res images saved in 'image-data' folder (8x8 PNG)
+- Images are automatically named with timestamps
+- Supports multiple matrix configurations (e.g., 1x1, 1x2, 2x1, 2x2)
+
+Dependencies:
+- Python 3.x
+- tkinter (usually included with Python)
+- Pillow (PIL) for image processing
+"""
+
 #!/usr/bin/env python3
 
 import tkinter as tk
-from tkinter import simpledialog
-from PIL import Image, ImageDraw
+from tkinter import simpledialog, messagebox
+from PIL import Image, ImageDraw, ImageTk
 from datetime import datetime
 import os
 
 def ensure_directories():
     """Create necessary directories if they don't exist"""
-    for directory in ['drawings', 'images']:
+    for directory in ['saved-drawings', 'image-data']:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -36,7 +63,7 @@ class MatrixConfigDialog(simpledialog.Dialog):
             'Green': '#00FF00',
             'Amber': '#FFBF00'
         }
-        self.color_var = tk.StringVar(value='Red')
+        self.color_var = tk.StringVar(value='White')
         self.color_menu = tk.OptionMenu(
             master,
             self.color_var,
@@ -65,6 +92,10 @@ class PixelDrawer:
     def __init__(self, root):
         self.root = root
         self.root.title("Pixel Drawer")
+        self.root.configure(bg='#2B2B2B')  # Dark grey background
+        
+        # Set minimum window size (significantly reduced)
+        self.root.minsize(1400, 600)
         
         # Get matrix configuration
         config_dialog = MatrixConfigDialog(root)
@@ -79,61 +110,28 @@ class PixelDrawer:
         
         # Constants for the grid
         self.SQUARE_SIZE = 36
-        self.GRID_WIDTH = 8 * self.MATRIX_COLS  # 8 pixels × number of columns
-        self.GRID_HEIGHT = 8 * self.MATRIX_ROWS  # 8 pixels × number of rows
+        self.GRID_WIDTH = 8 * self.MATRIX_COLS
+        self.GRID_HEIGHT = 8 * self.MATRIX_ROWS
         
-        # Create main frame
-        self.main_frame = tk.Frame(root)
-        self.main_frame.pack(padx=10, pady=10)
+        # Create split view
+        self.split_frame = tk.Frame(root, bg='#2B2B2B')
+        self.split_frame.pack(expand=True, fill=tk.BOTH)
         
-        # Create canvas
-        self.canvas = tk.Canvas(
-            self.main_frame,
-            width=self.GRID_WIDTH * self.SQUARE_SIZE,
-            height=self.GRID_HEIGHT * self.SQUARE_SIZE,
-            bg='white'
-        )
-        self.canvas.pack()
+        # Left side - Pixel Editor
+        self.editor_frame = tk.Frame(self.split_frame, bg='#2B2B2B')
+        self.editor_frame.pack(side=tk.LEFT, expand=True, fill=tk.BOTH, padx=(0, 20))  # Reduced right padding
         
-        # Create button frame
-        self.button_frame = tk.Frame(self.main_frame)
-        self.button_frame.pack(pady=10)
+        # Right side - Image Gallery (with fixed width)
+        # Increased width to 700 to accommodate padding while maintaining ~600px content width
+        self.gallery_frame = tk.Frame(self.split_frame, bg='#2B2B2B', width=700, padx=40)
+        self.gallery_frame.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.gallery_frame.pack_propagate(False)  # Prevent frame from shrinking to content
         
-        # Create reset button
-        self.reset_button = tk.Button(
-            self.button_frame,
-            text="Reset Grid",
-            command=self.reset_grid
-        )
-        self.reset_button.pack(side=tk.LEFT, padx=5)
+        # Create editor components
+        self.create_editor()
         
-        # Create save PNG button
-        self.save_button = tk.Button(
-            self.button_frame,
-            text="Save as PNG",
-            command=self.save_drawing
-        )
-        self.save_button.pack(side=tk.LEFT, padx=5)
-        
-        # Create save Arduino button
-        self.save_arduino_button = tk.Button(
-            self.button_frame,
-            text="Save for Arduino",
-            command=self.save_arduino_format
-        )
-        self.save_arduino_button.pack(side=tk.LEFT, padx=5)
-        
-        # Add orientation state
-        self.orientation_var = tk.BooleanVar(value=False)  # Changed to False to start unchecked
-        
-        # Create orientation checkbox
-        self.orientation_checkbox = tk.Checkbutton(
-            self.button_frame,
-            text="Rotate Output -90",
-            variable=self.orientation_var,
-            command=self.on_orientation_change
-        )
-        self.orientation_checkbox.pack(side=tk.LEFT, padx=5)
+        # Create gallery components
+        self.create_gallery()
         
         # Store rectangle references
         self.rectangles = []
@@ -143,11 +141,238 @@ class PixelDrawer:
         
         # Bind click and drag events
         self.canvas.bind('<Button-1>', self.on_click)
-        self.canvas.bind('<B1-Motion>', self.on_drag)  # Add drag binding
+        self.canvas.bind('<B1-Motion>', self.on_drag)
         
         # Add state to track the current drawing color
         self.current_draw_color = None
         
+        # Load existing images
+        self.load_gallery_images()
+
+    def create_editor(self):
+        """Create the pixel editor side"""
+        # Create spacer frame for top padding
+        tk.Frame(self.editor_frame, bg='#2B2B2B', height=20).pack()  # Reduced from 40
+        
+        # Create canvas frame with border effect
+        self.canvas_frame = tk.Frame(
+            self.editor_frame,
+            bg='#1E1E1E',
+            padx=1,  # Reduced from 2
+            pady=1   # Reduced from 2
+        )
+        self.canvas_frame.pack(expand=True)
+        
+        # Create canvas with padding frame
+        self.canvas_padding = tk.Frame(
+            self.canvas_frame,
+            bg='#333333',
+            padx=15,  # Reduced from 30
+            pady=15   # Reduced from 30
+        )
+        self.canvas_padding.pack(expand=True)
+        
+        # Create canvas
+        self.canvas = tk.Canvas(
+            self.canvas_padding,
+            width=self.GRID_WIDTH * self.SQUARE_SIZE,
+            height=self.GRID_HEIGHT * self.SQUARE_SIZE,
+            bg='#333333',
+            highlightthickness=0
+        )
+        self.canvas.pack()
+        
+        # Create button frame with dark theme
+        self.button_frame = tk.Frame(self.editor_frame, bg='#2B2B2B')
+        self.button_frame.pack(pady=20)  # Reduced from 40
+        
+        # Style for buttons
+        button_style = {
+            'bg': '#404040',
+            'fg': 'white',
+            'relief': tk.FLAT,
+            'padx': 15,
+            'pady': 8
+        }
+        
+        # Create buttons
+        self.reset_button = tk.Button(
+            self.button_frame,
+            text="Reset Grid",
+            command=self.reset_grid,
+            **button_style
+        )
+        self.reset_button.pack(side=tk.LEFT, padx=5)
+        
+        self.save_button = tk.Button(
+            self.button_frame,
+            text="Save",
+            command=self.save_all,
+            **button_style
+        )
+        self.save_button.pack(side=tk.LEFT, padx=5)
+
+    def create_gallery(self):
+        """Create the image gallery side"""
+        # Create title frame for better padding control
+        title_frame = tk.Frame(self.gallery_frame, bg='#2B2B2B')
+        title_frame.pack(pady=20)
+        
+        # Create gallery label
+        tk.Label(
+            title_frame,
+            text="Saved Drawings",
+            font=('Arial', 14),
+            bg='#2B2B2B',
+            fg='white'
+        ).pack()
+        
+        # Add instruction text
+        tk.Label(
+            title_frame,
+            text="right click to remove an image",
+            font=('Arial', 9),
+            bg='#2B2B2B',
+            fg='#888888'  # Light grey color
+        ).pack()
+        
+        # Create container frame for gallery canvas and scrollbar with extra padding
+        gallery_container = tk.Frame(self.gallery_frame, bg='#2B2B2B', padx=20)  # Added padding to container
+        gallery_container.pack(expand=True, fill=tk.BOTH, pady=(0, 20))
+        
+        # Create scrollable frame for images
+        self.gallery_canvas = tk.Canvas(
+            gallery_container,
+            bg='#333333',
+            highlightthickness=0
+        )
+        scrollbar = tk.Scrollbar(
+            gallery_container,
+            orient="vertical",
+            command=self.gallery_canvas.yview
+        )
+        
+        # Configure scrolling
+        self.gallery_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Create frame for image grid with padding
+        self.gallery_grid = tk.Frame(
+            self.gallery_canvas,
+            bg='#333333',
+            pady=20  # Bottom padding for grid
+        )
+        
+        # Pack scrollbar and canvas with extra padding
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, padx=(0, 20))  # Added right padding to scrollbar
+        self.gallery_canvas.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+        
+        # Create window in canvas for the frame
+        self.gallery_canvas.create_window(
+            (0, 0),
+            window=self.gallery_grid,
+            anchor="nw"
+        )
+        
+        # Configure canvas scrolling
+        self.gallery_grid.bind(
+            "<Configure>",
+            lambda e: self.gallery_canvas.configure(
+                scrollregion=self.gallery_canvas.bbox("all")
+            )
+        )
+
+    def load_gallery_images(self):
+        """Load and display existing high-res images"""
+        try:
+            image_files = sorted(
+                [f for f in os.listdir('saved-drawings') if f.endswith('.png')],
+                reverse=True
+            )
+            
+            row = 0
+            col = 0
+            for img_file in image_files:
+                try:
+                    # Load and resize image
+                    img_path = os.path.join('saved-drawings', img_file)
+                    img = Image.open(img_path)
+                    img.thumbnail((120, 120))  # Smaller thumbnails for four columns
+                    
+                    # Convert to PhotoImage
+                    photo = ImageTk.PhotoImage(img)
+                    
+                    # Create frame for image
+                    img_frame = tk.Frame(
+                        self.gallery_grid,
+                        bg='#1E1E1E',
+                        padx=2,
+                        pady=2
+                    )
+                    img_frame.grid(row=row, column=col, padx=6, pady=6)  # Reduced padding
+                    
+                    # Add image label
+                    label = tk.Label(
+                        img_frame,
+                        image=photo,
+                        bg='#333333'
+                    )
+                    label.image = photo  # Keep reference
+                    label.filename = img_file  # Store filename for deletion
+                    label.pack()
+                    
+                    # Bind right-click event
+                    label.bind('<Button-3>', self.show_context_menu)
+                    
+                    # Update grid position
+                    col += 1
+                    if col >= 4:  # Changed to 4 columns
+                        col = 0
+                        row += 1
+                        
+                except Exception as e:
+                    print(f"Error loading image {img_file}: {e}")
+                    
+        except Exception as e:
+            print(f"Error loading gallery: {e}")
+
+    def show_context_menu(self, event):
+        """Show right-click context menu for image deletion"""
+        label = event.widget
+        menu = tk.Menu(self.root, tearoff=0, bg='#404040', fg='white', 
+                      activebackground='#505050', activeforeground='white')
+        menu.add_command(label="Delete", 
+                        command=lambda: self.confirm_delete(label))
+        menu.tk_popup(event.x_root, event.y_root)
+
+    def confirm_delete(self, label):
+        """Show confirmation dialog and delete if confirmed"""
+        if messagebox.askyesno("Confirm Delete", 
+                             "Are you sure you want to delete this image?",
+                             icon='warning'):
+            try:
+                # Delete high-res image
+                hi_res_path = os.path.join('saved-drawings', label.filename)
+                if os.path.exists(hi_res_path):
+                    os.remove(hi_res_path)
+                
+                # Delete corresponding low-res image
+                base_name = label.filename.replace('pixel_art_', '')
+                timestamp = base_name.split('.')[0]
+                low_res_files = [f for f in os.listdir('image-data') 
+                               if f.startswith(f'pixel_art_{timestamp}')]
+                
+                for low_res_file in low_res_files:
+                    low_res_path = os.path.join('image-data', low_res_file)
+                    if os.path.exists(low_res_path):
+                        os.remove(low_res_path)
+                
+                # Refresh gallery
+                self.clear_gallery()
+                self.load_gallery_images()
+                
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete image: {e}")
+
     def create_grid(self):
         for row in range(self.GRID_HEIGHT):
             row_rectangles = []
@@ -198,14 +423,31 @@ class PixelDrawer:
         if self.current_draw_color is not None:
             self.canvas.itemconfig(rectangle, fill=self.current_draw_color)
 
-    def save_drawing(self):
+    def clear_gallery(self):
+        """Clear all images from the gallery grid"""
+        for widget in self.gallery_grid.winfo_children():
+            widget.destroy()
+
+    def save_all(self):
+        """Save both high-res and low-res images"""
         # Ensure directories exist
         ensure_directories()
         
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Save images
+        self.save_drawing(timestamp)
+        
+        # Refresh gallery view
+        self.clear_gallery()
+        self.load_gallery_images()
+
+    def save_drawing(self, timestamp):
+        """Save high-res and low-res PNG images"""
         # Create high-res image
         hi_res_image = Image.new('RGB', (self.GRID_WIDTH * self.SQUARE_SIZE, 
-                                 self.GRID_HEIGHT * self.SQUARE_SIZE), 
-                         'white')
+                                self.GRID_HEIGHT * self.SQUARE_SIZE), 
+                        'white')
         hi_res_draw = ImageDraw.Draw(hi_res_image)
         
         # Create low-res image (8px × 8px per matrix)
@@ -240,92 +482,13 @@ class PixelDrawer:
                 hi_res_draw.rectangle([x1, y1, x2, y2], fill=color)
                 low_res_draw.rectangle([lx1, ly1, lx2, ly2], fill=color)
         
-        # Save with timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        hi_res_filename = f"drawings/pixel_art_{timestamp}.png"
-        low_res_filename = f"images/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
+        # Save images with timestamp
+        hi_res_filename = f"saved-drawings/pixel_art_{timestamp}.png"
+        low_res_filename = f"image-data/pixel_art_{timestamp}_{low_res_width}x{low_res_height}.png"
         
         hi_res_image.save(hi_res_filename)
         low_res_image.save(low_res_filename)
         print(f"Drawings saved as {hi_res_filename} and {low_res_filename}")
-
-    def on_orientation_change(self):
-        # The orientation_var.get() will return True for checked (rotated) and False for unchecked
-        pass  # We don't need to do anything here since we'll check orientation_var.get() when saving
-    
-    def save_arduino_format(self):
-        if not os.path.exists('arduino'):
-            os.makedirs('arduino')
-            
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"arduino/pixel_art_{timestamp}.h"
-        
-        with open(filename, 'w') as f:
-            f.write("static uint8_t PROGMEM\n")
-            f.write(f"  pixelImg[][{self.GRID_WIDTH}] = {{\n  {{ ")  # Updated array size
-            
-            if not self.orientation_var.get():
-                self.save_orientation_1(f)
-            else:
-                self.save_orientation_2(f)
-            
-            f.write(" },\n    };\n")
-        
-        print(f"Arduino format saved as {filename}")
-    
-    def save_orientation_1(self, f):
-        # Original orientation
-        for base_row in range(8):
-            if base_row > 0:
-                f.write("\n    ")
-            
-            for matrix_row in range(self.MATRIX_ROWS):
-                for matrix_col in range(self.MATRIX_COLS):
-                    matrix_start_row = matrix_row * 8
-                    matrix_start_col = matrix_col * 8
-                    
-                    binary_number = 0
-                    for col in range(8):  # Process each column within the matrix
-                        actual_row = base_row + matrix_start_row
-                        actual_col = col + matrix_start_col
-                        rectangle = self.rectangles[actual_row][actual_col]
-                        color = self.canvas.itemcget(rectangle, 'fill')
-                        bit = 1 if color == self.LED_COLOR else 0
-                        binary_number |= (bit << (7 - col))
-                    
-                    binary_str = f"B{binary_number:08b}"
-                    f.write(binary_str)
-                    # Add comma if not the last number
-                    if not (base_row == 7 and matrix_row == self.MATRIX_ROWS-1 
-                           and matrix_col == self.MATRIX_COLS-1):
-                        f.write(", ")
-    
-    def save_orientation_2(self, f):
-        # Rotated orientation
-        for base_row in range(7, -1, -1):
-            if base_row < 7:
-                f.write("\n    ")
-            
-            for matrix_row in range(self.MATRIX_ROWS):
-                for matrix_col in range(self.MATRIX_COLS):
-                    matrix_start_row = matrix_row * 8
-                    matrix_start_col = matrix_col * 8
-                    
-                    binary_number = 0
-                    for bit_pos in range(8):
-                        actual_row = matrix_start_row + (7 - bit_pos)
-                        actual_col = base_row + matrix_start_col
-                        
-                        rectangle = self.rectangles[actual_row][actual_col]
-                        color = self.canvas.itemcget(rectangle, 'fill')
-                        bit = 1 if color == self.LED_COLOR else 0
-                        binary_number |= (bit << bit_pos)
-                    
-                    binary_str = f"B{binary_number:08b}"
-                    f.write(binary_str)
-                    if not (base_row == 0 and matrix_row == self.MATRIX_ROWS-1 
-                           and matrix_col == self.MATRIX_COLS-1):
-                        f.write(", ")
 
     def reset_grid(self):
         # Set all squares back to black

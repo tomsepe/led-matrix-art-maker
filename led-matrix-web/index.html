@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Matrix Art Maker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: #2B2B2B;
+            color: #ffffff;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        .container {
+            background: #333333;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #1E1E1E;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .led {
+            width: 40px;
+            height: 40px;
+            background-color: #1E1E1E;
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .led:hover {
+            transform: scale(1.1);
+        }
+
+        .colors {
+            display: grid;
+            grid-template-columns: repeat(7, 40px);
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #1E1E1E;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .color-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .color-button:hover {
+            transform: scale(1.1);
+        }
+
+        .color-button.selected {
+            border: 2px solid #2196F3;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            position: relative;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            background-color: #555;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1;
+        }
+
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+
+        .save-btn:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .export {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .reset {
+            background-color: #f44336;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: scale(1.05);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .gallery {
+            background: #333333;
+            padding: 20px;
+            border-radius: 8px;
+            width: 600px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .gallery-title {
+            margin: 0 0 10px 0;
+            font-size: 1.2em;
+            color: #ffffff;
+        }
+
+        .gallery-instructions {
+            margin: 0 0 20px 0;
+            font-size: 0.8em;
+            color: #888888;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .gallery-item {
+            position: relative;
+            padding: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            min-width: 120px;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        /* Scrollbar styling */
+        .gallery::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .gallery::-webkit-scrollbar-track {
+            background: #1E1E1E;
+            border-radius: 4px;
+        }
+
+        .gallery::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        .gallery::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+
+        /* Add modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #333;
+            padding: 20px;
+            padding-top: 100px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            position: relative;
+        }
+
+        .modal-content img {
+            display: block;
+            margin: 20px auto;
+            border: 2px solid #444;
+            border-radius: 4px;
+            cursor: context-menu;
+            max-width: 288px;
+            height: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            font-size: 72px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .save-instructions {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .save-instructions .important {
+            color: #2196F3;
+            font-weight: bold;
+        }
+    </style>
+  </head>
+  <body>
+    <h1>LED Matrix Art Maker</h1>
+    <!-- Add modal HTML -->
+    <div id="saveModal" class="modal">
+        <button class="close-modal" onclick="closeModal()">&times;</button>
+        <div class="modal-content">
+            <div class="save-instructions">
+                <h3>Save Your LED Matrix Art</h3>
+                <p>1. Right-click on the image below</p>
+                <p>2. Select "Save image as..."</p>
+                <p class="important">3. Navigate to and select the 'web-drawings' folder in the 'led-matrix-web' directory</p>
+                <p>4. Click Save</p>
+                <p>5. Close this window when done</p>
+            </div>
+            <img id="saveImage" alt="LED Matrix Art">
+        </div>
+    </div>
+    <div class="main-container">
+        <div class="container">
+            <div class="grid" id="led-grid"></div>
+            <div class="colors" id="color-picker"></div>
+            <div class="controls">
+                <button class="export save-btn" onclick="saveAsImage()">
+                    Save Image
+                    <span class="tooltip">
+                        To save your design:
+                        1. Click this button
+                        2. Follow the instructions in the pop-up window
+                    </span>
+                </button>
+                <button class="reset" onclick="resetMatrix()">Reset Matrix</button>
+            </div>
+        </div>
+        <div class="gallery">
+            <h2 class="gallery-title">Saved Drawings</h2>
+            <p class="gallery-instructions">To delete images, manually remove them from the 'web-drawings' folder</p>
+            <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const MATRIX_SIZE = 8;
+        const COLORS = [
+            { label: 'White', value: '#FFFFFF' },
+            { label: 'Red', value: '#FF0000' },
+            { label: 'Green', value: '#00FF00' },
+            { label: 'Blue', value: '#0000FF' },
+            { label: 'Yellow', value: '#FFFF00' },
+            { label: 'Orange', value: '#FF8C00' },
+            { label: 'Pink', value: '#FF00FF' }
+        ];
+
+        let selectedColor = COLORS[0].value;
+        let currentDrawingColor = null;  // Track the color being used in the current drawing
+        let matrix = Array(MATRIX_SIZE).fill().map(() => 
+            Array(MATRIX_SIZE).fill().map(() => ({ on: false, color: '#FFFFFF' }))
+        );
+
+        // Initialize the LED grid
+        const grid = document.getElementById('led-grid');
+        for (let row = 0; row < MATRIX_SIZE; row++) {
+            for (let col = 0; col < MATRIX_SIZE; col++) {
+                const led = document.createElement('div');
+                led.className = 'led';
+                led.onclick = () => toggleLED(row, col);
+                grid.appendChild(led);
+            }
+        }
+
+        // Initialize the color picker
+        const colorPicker = document.getElementById('color-picker');
+        COLORS.forEach(color => {
+            const button = document.createElement('button');
+            button.className = 'color-button';
+            button.style.backgroundColor = color.value;
+            button.onclick = () => {
+                // Only allow color change if no drawing has started or grid is empty
+                if (!currentDrawingColor || !hasAnyLEDOn()) {
+                    selectedColor = color.value;
+                    currentDrawingColor = color.value;
+                    document.querySelectorAll('.color-button').forEach(btn => 
+                        btn.classList.remove('selected')
+                    );
+                    button.classList.add('selected');
+                } else {
+                    alert('Cannot change color while drawing. Please reset the grid first.');
+                }
+            };
+            if (color.value === selectedColor) {
+                button.classList.add('selected');
+            }
+            colorPicker.appendChild(button);
+        });
+
+        function hasAnyLEDOn() {
+            return matrix.some(row => row.some(led => led.on));
+        }
+
+        function toggleLED(row, col) {
+            const led = matrix[row][col];
+            if (!currentDrawingColor && !led.on) {
+                currentDrawingColor = selectedColor;
+            }
+            led.on = !led.on;
+            led.color = led.on ? currentDrawingColor : '#FFFFFF';
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const leds = document.querySelectorAll('.led');
+            matrix.forEach((row, rowIndex) => {
+                row.forEach((led, colIndex) => {
+                    const index = rowIndex * MATRIX_SIZE + colIndex;
+                    leds[index].style.backgroundColor = led.on ? led.color : '#1E1E1E';
+                });
+            });
+        }
+
+        // Load images from web-drawings directory
+        async function loadGalleryImages() {
+            const galleryGrid = document.getElementById('gallery-grid');
+            galleryGrid.innerHTML = ''; // Clear existing images
+
+            try {
+                // Fetch the directory listing
+                const response = await fetch('web-drawings/');
+                const text = await response.text();
+                
+                // Parse the directory listing HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(text, 'text/html');
+                
+                // Get all PNG files with their modification dates
+                const pngFiles = [];
+                const links = Array.from(doc.querySelectorAll('a'))
+                    .filter(link => link.textContent.trim().toLowerCase().endsWith('.png'));
+
+                // Get modification dates for each PNG file
+                for (const link of links) {
+                    const filename = link.textContent.trim();
+                    try {
+                        const fileResponse = await fetch(`web-drawings/${filename}`);
+                        const lastModified = fileResponse.headers.get('last-modified');
+                        pngFiles.push({
+                            filename,
+                            modDate: lastModified ? new Date(lastModified) : new Date()
+                        });
+                    } catch (err) {
+                        console.error(`Error getting date for ${filename}:`, err);
+                        pngFiles.push({
+                            filename,
+                            modDate: new Date()
+                        });
+                    }
+                }
+
+                if (pngFiles.length === 0) {
+                    const noImagesMsg = document.createElement('div');
+                    noImagesMsg.style.padding = '20px';
+                    noImagesMsg.style.color = '#888';
+                    noImagesMsg.innerHTML = 'No images yet. Click "Save Image" to add some!';
+                    galleryGrid.appendChild(noImagesMsg);
+                    return;
+                }
+
+                // Sort files by modification date (newest first)
+                pngFiles.sort((a, b) => b.modDate - a.modDate);
+
+                // Display each image
+                pngFiles.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    
+                    const img = document.createElement('img');
+                    img.src = `web-drawings/${file.filename}`;
+                    img.alt = file.filename;
+                    
+                    item.appendChild(img);
+                    galleryGrid.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                const errorMsg = document.createElement('div');
+                errorMsg.style.padding = '20px';
+                errorMsg.style.color = '#ff6b6b';
+                errorMsg.innerHTML = 'To view the gallery, please run:<br><br>' +
+                    '<code>python -m http.server</code><br><br>' +
+                    'Then open <a href="http://localhost:8000" style="color: #2196F3">http://localhost:8000</a>';
+                galleryGrid.appendChild(errorMsg);
+            }
+        }
+
+        // Load gallery images when the page loads
+        window.addEventListener('load', loadGalleryImages);
+
+        // Add a function to refresh gallery
+        function refreshGallery() {
+            loadGalleryImages();
+        }
+
+        function saveAsImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 288;  // Fixed size 288x288
+            canvas.height = 288;
+            const ctx = canvas.getContext('2d');
+
+            // Fill background with pure black
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw LEDs
+            const cellSize = 36; // 288/8 = 36 pixels per LED
+            matrix.forEach((row, rowIndex) => {
+                row.forEach((led, colIndex) => {
+                    ctx.fillStyle = led.on ? led.color : '#000000';
+                    const x = colIndex * cellSize;
+                    const y = rowIndex * cellSize;
+                    const size = 34; // Slightly smaller than cellSize for spacing
+                    ctx.fillRect(x + 1, y + 1, size, size);
+                });
+            });
+
+            // Show modal with the image
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const modal = document.getElementById('saveModal');
+                const img = document.getElementById('saveImage');
+                
+                img.src = url;
+                modal.style.display = 'flex';
+                
+                // Clean up URL when modal is closed
+                modal.onclose = () => URL.revokeObjectURL(url);
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('saveModal');
+            modal.style.display = 'none';
+            refreshGallery();
+        }
+
+        function resetMatrix() {
+            matrix = Array(MATRIX_SIZE).fill().map(() => 
+                Array(MATRIX_SIZE).fill().map(() => ({ on: false, color: '#FFFFFF' }))
+            );
+            currentDrawingColor = null;  // Reset the current drawing color
+            updateDisplay();
+        }
+    </script>
+  </body>
+</html>
