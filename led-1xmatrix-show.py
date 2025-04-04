@@ -47,16 +47,20 @@ i2c = board.I2C()
 matrix = Matrix8x8(i2c, address=0x70)  # Default address is 0x70
 
 # Set brightness (0.0 to 1.0)
-matrix.brightness = 0.5
+matrix.brightness = 1.0  # Increased brightness for better visibility
 matrix.blink_rate = 0
 
 def display_pattern(pattern_data):
-    """Display an 8x8 pattern on the matrix"""
+    """Display an 8x8 pattern on the matrix using optimized methods"""
     try:
-        # Set all pixels
+        # First clear the matrix using fill() which is faster than setting individual pixels
+        matrix.fill(0)
+        
+        # Set pixels using direct buffer manipulation
         for row, byte_val in enumerate(pattern_data):
             for col in range(8):
-                matrix[col, row] = (byte_val >> (7 - col)) & 1
+                if (byte_val >> (7 - col)) & 1:
+                    matrix.pixel(col, row, 1)
         matrix.show()
         return True
     except Exception as e:
