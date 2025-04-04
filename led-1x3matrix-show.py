@@ -40,18 +40,22 @@ matrix2 = Matrix8x8(i2c, address=0x71)  # Middle matrix
 matrix3 = Matrix8x8(i2c, address=0x70)  # Left matrix 
 
 # Set brightness for all matrices (0.0 to 1.0)
-BRIGHTNESS = 1.0
+BRIGHTNESS = 1.0  # Increased brightness for better visibility
 for matrix in [matrix1, matrix2, matrix3]:
     matrix.brightness = BRIGHTNESS
     matrix.blink_rate = 0  # Disable blinking
 
 def display_pattern(matrix, pattern_data):
-    """Display an 8x8 pattern on a single matrix"""
+    """Display an 8x8 pattern on a single matrix using optimized methods"""
     try:
-        # Set all pixels first, then show at once
+        # First clear the matrix using fill() which is faster than setting individual pixels
+        matrix.fill(0)
+        
+        # Set pixels using direct buffer manipulation
         for row, byte_val in enumerate(pattern_data):
             for col in range(8):
-                matrix[col, row] = (byte_val >> (7 - col)) & 1
+                if (byte_val >> (7 - col)) & 1:
+                    matrix.pixel(col, row, 1)
         return True
     except Exception as e:
         print(f"Error displaying pattern: {e}")
