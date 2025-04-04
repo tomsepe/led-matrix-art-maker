@@ -40,7 +40,7 @@ matrix2 = Matrix8x8(i2c, address=0x71)  # Middle matrix
 matrix3 = Matrix8x8(i2c, address=0x70)  # Left matrix 
 
 # Set brightness for all matrices (0.0 to 1.0)
-BRIGHTNESS = 0.5
+BRIGHTNESS = 1.0
 for matrix in [matrix1, matrix2, matrix3]:
     matrix.brightness = BRIGHTNESS
     matrix.blink_rate = 0  # Disable blinking
