@@ -81,33 +81,51 @@ print(f"\nFound {len(valid_pairs)} valid I2C pin pairs")
 # I2C Bus Test for KB2040
 # Tests two separate I2C buses for LED matrix control
 
-print("Starting I2C bus test...")
+print("\nI2C Bus Test for KB2040")
+print("======================")
 
-# Initialize first I2C bus (default pins)
-print("\nInitializing first I2C bus (SCL/SDA)...")
-i2c1 = busio.I2C(board.SCL, board.SDA)
-print("First bus initialized successfully")
+# Test first I2C bus (default pins)
+print("\nTesting first I2C bus (SCL/SDA)...")
+try:
+    i2c1 = busio.I2C(board.SCL, board.SDA)
+    print("First bus initialized successfully")
+    
+    # Scan for devices
+    print("Scanning for devices...")
+    devices1 = i2c1.scan()
+    if devices1:
+        print("Found devices at addresses:", [hex(device) for device in devices1])
+    else:
+        print("No devices found on first bus")
+    
+    # Deinitialize first bus
+    i2c1.deinit()
+    print("First bus deinitialized")
+except Exception as e:
+    print(f"Error with first bus: {e}")
 
-# Initialize second I2C bus (alternative pins)
-print("\nInitializing second I2C bus (A3/A2)...")
-i2c2 = busio.I2C(board.A3, board.A2)
-print("Second bus initialized successfully")
+# Wait a moment between tests
+time.sleep(1)
 
-# Scan for devices on first bus
-print("\nScanning first I2C bus (SCL/SDA):")
-devices1 = i2c1.scan()
-if devices1:
-    print("Found devices at addresses:", [hex(device) for device in devices1])
-else:
-    print("No devices found on first bus")
-
-# Scan for devices on second bus
-print("\nScanning second I2C bus (A3/A2):")
-devices2 = i2c2.scan()
-if devices2:
-    print("Found devices at addresses:", [hex(device) for device in devices2])
-else:
-    print("No devices found on second bus")
+# Test second I2C bus (alternative pins)
+print("\nTesting second I2C bus (A3/A2)...")
+try:
+    i2c2 = busio.I2C(board.A3, board.A2)
+    print("Second bus initialized successfully")
+    
+    # Scan for devices
+    print("Scanning for devices...")
+    devices2 = i2c2.scan()
+    if devices2:
+        print("Found devices at addresses:", [hex(device) for device in devices2])
+    else:
+        print("No devices found on second bus")
+    
+    # Deinitialize second bus
+    i2c2.deinit()
+    print("Second bus deinitialized")
+except Exception as e:
+    print(f"Error with second bus: {e}")
 
 print("\nI2C bus test complete!")
 print("Press any key to enter the REPL")
