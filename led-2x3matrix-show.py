@@ -57,6 +57,15 @@ class SMBusWrapper:
             end = len(buffer)
         self.bus.write_i2c_block_data(address, buffer[start], buffer[start+1:end])
 
+    def writeto(self, address, buffer, *, start=0, end=None, stop=True):
+        if end is None:
+            end = len(buffer)
+        if len(buffer[start:end]) == 0:
+            # Empty write for probing
+            self.bus.write_byte(address, 0)
+        else:
+            self.bus.write_i2c_block_data(address, buffer[start], buffer[start+1:end])
+
     def readfrom_into(self, address, buffer, *, start=0, end=None):
         if end is None:
             end = len(buffer)
