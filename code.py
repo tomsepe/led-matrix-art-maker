@@ -7,6 +7,8 @@ import busio
 from microcontroller import Pin
 import time
 
+print("Starting I2C pin pair test...")
+print("This may take a few moments...")
 
 def is_hardware_i2c(scl, sda):
     try:
@@ -20,6 +22,7 @@ def is_hardware_i2c(scl, sda):
 
 
 def get_unique_pins():
+    print("Getting available pins...")
     exclude = [
         getattr(board, p)
         for p in [
@@ -59,20 +62,32 @@ def get_unique_pins():
     for p in pins:
         if p not in unique:
             unique.append(p)
+    print(f"Found {len(unique)} available pins")
     return unique
 
-# Open a file to write results
-with open("i2c_results.txt", "w") as f:
-    f.write("I2C Pin Pair Test Results\n")
-    f.write("========================\n\n")
-    
-    for scl_pin in get_unique_pins():
-        for sda_pin in get_unique_pins():
-            if scl_pin is sda_pin:
-                continue
-            if is_hardware_i2c(scl_pin, sda_pin):
-                result = f"SCL pin: {scl_pin}\t SDA pin: {sda_pin}\n"
-                f.write(result)
-                print(result)  # Also print to serial if available
-    
-    f.write("\nTest complete!")
+print("\nTesting I2C pin pairs...")
+print("Valid pairs will be listed below:")
+print("-------------------------------")
+
+valid_pairs = []
+for scl_pin in get_unique_pins():
+    for sda_pin in get_unique_pins():
+        if scl_pin is sda_pin:
+            continue
+        if is_hardware_i2c(scl_pin, sda_pin):
+            result = f"SCL pin: {scl_pin}\t SDA pin: {sda_pin}"
+            print(result)
+            valid_pairs.append((scl_pin, sda_pin))
+
+print("\nTest complete!")
+print(f"Found {len(valid_pairs)} valid I2C pin pairs")
+print("\nPress Ctrl+C to exit")
+
+# Simple LED blink test
+led = board.LED
+
+while True:
+    led.value = True
+    time.sleep(0.5)
+    led.value = False
+    time.sleep(0.5)
