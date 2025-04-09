@@ -7,10 +7,6 @@ import busio
 from microcontroller import Pin
 import time
 
-# Initialize serial communication
-print("Starting I2C pin test...")
-print("Waiting for serial connection...")
-time.sleep(1)  # Give time for serial connection to establish
 
 def is_hardware_i2c(scl, sda):
     try:
@@ -65,15 +61,18 @@ def get_unique_pins():
             unique.append(p)
     return unique
 
-print("Testing I2C pin pairs...")
-print("Available pins:", [str(pin) for pin in get_unique_pins()])
-print("\nValid I2C pin pairs:")
-
-for scl_pin in get_unique_pins():
-    for sda_pin in get_unique_pins():
-        if scl_pin is sda_pin:
-            continue
-        if is_hardware_i2c(scl_pin, sda_pin):
-            print("SCL pin:", scl_pin, "\t SDA pin:", sda_pin)
-
-print("\nTest complete!")
+# Open a file to write results
+with open("i2c_results.txt", "w") as f:
+    f.write("I2C Pin Pair Test Results\n")
+    f.write("========================\n\n")
+    
+    for scl_pin in get_unique_pins():
+        for sda_pin in get_unique_pins():
+            if scl_pin is sda_pin:
+                continue
+            if is_hardware_i2c(scl_pin, sda_pin):
+                result = f"SCL pin: {scl_pin}\t SDA pin: {sda_pin}\n"
+                f.write(result)
+                print(result)  # Also print to serial if available
+    
+    f.write("\nTest complete!")
