@@ -37,9 +37,35 @@ import random
 from patterns.led_patterns import PATTERNS
 import smbus2  # For direct I2C access
 
+class SMBusWrapper:
+    """Wrapper class to make SMBus look like busio.I2C"""
+    def __init__(self, bus_number):
+        self.bus = smbus2.SMBus(bus_number)
+        self._locked = False
+
+    def try_lock(self):
+        if not self._locked:
+            self._locked = True
+            return True
+        return False
+
+    def unlock(self):
+        self._locked = False
+
+    def write(self, address, buffer, *, start=0, end=None):
+        if end is None:
+            end = len(buffer)
+        self.bus.write_i2c_block_data(address, buffer[start], buffer[start+1:end])
+
+    def readfrom_into(self, address, buffer, *, start=0, end=None):
+        if end is None:
+            end = len(buffer)
+        data = self.bus.read_i2c_block_data(address, 0, end-start)
+        buffer[start:end] = data
+
 # Initialize both I2C buses
 i2c1 = board.I2C()  # Primary I2C bus (default)
-i2c2 = smbus2.SMBus(2)  # Secondary I2C bus using bus 2
+i2c2 = SMBusWrapper(2)  # Secondary I2C bus using bus 2
 
 # Create matrix objects for first set (Bus 1)
 matrix1_1 = Matrix8x8(i2c1, address=0x72)  # Right matrix
