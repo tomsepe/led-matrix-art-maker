@@ -2,7 +2,7 @@
 # For use with adafruit KB2040 board
 #  SPDX-FileCopyrightText: 2021-2023 Kattni Rembor for Adafruit Industries
 # SPDX-License-Identifier: MIT
-"""CircuitPython I2C possible pin-pair identifying script"""
+"""CircuitPython I2C bus testing script"""
 import board
 import busio
 from microcontroller import Pin
@@ -84,48 +84,46 @@ print(f"\nFound {len(valid_pairs)} valid I2C pin pairs")
 print("\nI2C Bus Test for KB2040")
 print("======================")
 
-# Test first I2C bus (default pins)
-print("\nTesting first I2C bus (SCL/SDA)...")
-try:
-    i2c1 = busio.I2C(board.SCL, board.SDA)
-    print("First bus initialized successfully")
-    
-    # Scan for devices
-    print("Scanning for devices...")
-    devices1 = i2c1.scan()
-    if devices1:
-        print("Found devices at addresses:", [hex(device) for device in devices1])
-    else:
-        print("No devices found on first bus")
-    
-    # Deinitialize first bus
-    i2c1.deinit()
-    print("First bus deinitialized")
-except Exception as e:
-    print(f"Error with first bus: {e}")
+def test_i2c_bus(scl_pin, sda_pin, bus_name):
+    print(f"\nTesting {bus_name} I2C bus ({scl_pin}/{sda_pin})...")
+    i2c = None
+    try:
+        # Initialize I2C bus
+        i2c = busio.I2C(scl_pin, sda_pin)
+        print(f"{bus_name} bus initialized successfully")
+        
+        # Wait for I2C lock
+        while not i2c.try_lock():
+            pass
+        
+        # Scan for devices
+        print("Scanning for devices...")
+        devices = i2c.scan()
+        if devices:
+            print("Found devices at addresses:", [hex(device) for device in devices])
+        else:
+            print("No devices found")
+        
+        # Release I2C lock
+        i2c.unlock()
+        
+    except Exception as e:
+        print(f"Error with {bus_name} bus: {e}")
+    finally:
+        # Ensure I2C is properly deinitialized
+        if i2c:
+            try:
+                i2c.deinit()
+                print(f"{bus_name} bus deinitialized")
+            except:
+                pass
+        time.sleep(1)  # Wait between tests
 
-# Wait a moment between tests
-time.sleep(1)
+# Test first I2C bus (default pins)
+test_i2c_bus(board.SCL, board.SDA, "First")
 
 # Test second I2C bus (alternative pins)
-print("\nTesting second I2C bus (A3/A2)...")
-try:
-    i2c2 = busio.I2C(board.A3, board.A2)
-    print("Second bus initialized successfully")
-    
-    # Scan for devices
-    print("Scanning for devices...")
-    devices2 = i2c2.scan()
-    if devices2:
-        print("Found devices at addresses:", [hex(device) for device in devices2])
-    else:
-        print("No devices found on second bus")
-    
-    # Deinitialize second bus
-    i2c2.deinit()
-    print("Second bus deinitialized")
-except Exception as e:
-    print(f"Error with second bus: {e}")
+test_i2c_bus(board.A3, board.A2, "Second")
 
 print("\nI2C bus test complete!")
 print("Press any key to enter the REPL")
