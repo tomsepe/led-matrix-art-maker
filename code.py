@@ -5,6 +5,8 @@
 import board
 import busio
 from microcontroller import Pin
+import time
+from adafruit_ht16k33 import segments
 
 def is_hardware_i2c(scl, sda):
     try:
@@ -59,20 +61,52 @@ def get_unique_pins():
             unique.append(p)
     return unique
 
-# Open a file to write results
-with open("i2c_results.txt", "w") as f:
-    f.write("I2C Pin Pair Test Results\n")
-    f.write("========================\n\n")
-    
-    valid_pairs = []
-    for scl_pin in get_unique_pins():
-        for sda_pin in get_unique_pins():
-            if scl_pin is sda_pin:
-                continue
-            if is_hardware_i2c(scl_pin, sda_pin):
-                result = f"SCL pin: {scl_pin}\t SDA pin: {sda_pin}\n"
-                f.write(result)
-                valid_pairs.append((scl_pin, sda_pin))
-    
-    f.write("\nTest complete!\n")
-    f.write(f"Found {len(valid_pairs)} valid I2C pin pairs\n")
+# Test I2C pin pairs and store results
+valid_pairs = []
+for scl_pin in get_unique_pins():
+    for sda_pin in get_unique_pins():
+        if scl_pin is sda_pin:
+            continue
+        if is_hardware_i2c(scl_pin, sda_pin):
+            valid_pairs.append((scl_pin, sda_pin))
+
+# Print results to REPL
+print("\nI2C Pin Pair Test Results")
+print("========================")
+for scl, sda in valid_pairs:
+    print(f"SCL pin: {scl}\t SDA pin: {sda}")
+print(f"\nFound {len(valid_pairs)} valid I2C pin pairs")
+
+# I2C Bus Test for KB2040
+# Tests two separate I2C buses for LED matrix control
+
+print("Starting I2C bus test...")
+
+# Initialize first I2C bus (default pins)
+print("\nInitializing first I2C bus (SCL/SDA)...")
+i2c1 = busio.I2C(board.SCL, board.SDA)
+print("First bus initialized successfully")
+
+# Initialize second I2C bus (alternative pins)
+print("\nInitializing second I2C bus (A3/A2)...")
+i2c2 = busio.I2C(board.A3, board.A2)
+print("Second bus initialized successfully")
+
+# Scan for devices on first bus
+print("\nScanning first I2C bus (SCL/SDA):")
+devices1 = i2c1.scan()
+if devices1:
+    print("Found devices at addresses:", [hex(device) for device in devices1])
+else:
+    print("No devices found on first bus")
+
+# Scan for devices on second bus
+print("\nScanning second I2C bus (A3/A2):")
+devices2 = i2c2.scan()
+if devices2:
+    print("Found devices at addresses:", [hex(device) for device in devices2])
+else:
+    print("No devices found on second bus")
+
+print("\nI2C bus test complete!")
+print("Press any key to enter the REPL")
