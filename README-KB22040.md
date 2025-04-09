@@ -1,58 +1,97 @@
-# CircuitPython Quickstart
-## Follow this step-by-step to quickly get CircuitPython running on your board.
-Download circuit python
-https://circuitpython.org/board/adafruit_kb2040/
+# Adafruit KB2040 Setup Guide
 
-To enter the bootloader, hold down the BOOT/BOOTSEL button (highlighted in red above), and while continuing to hold it (don't let go!), press and release the reset button (highlighted in red or blue above). Continue to hold the BOOT/BOOTSEL button until the RPI-RP2 drive appears!
+## Table of Contents
+1. [CircuitPython Installation](#circuitpython-installation)
+2. [Using Mu Editor](#using-mu-editor)
+3. [Safe Mode](#safe-mode)
+4. [I2C Configuration](#i2c-configuration)
+5. [Power Configuration](#power-configuration)
 
-If the drive does not appear, release all the buttons, and then repeat the process above.
+## CircuitPython Installation
 
-You can also start with your board unplugged from USB, press and hold the BOOTSEL button (highlighted in red above), continue to hold it while plugging it into USB, and wait for the drive to appear before releasing the button.
+1. Download CircuitPython for KB2040:
+   https://circuitpython.org/board/adafruit_kb2040/
 
-A lot of people end up using charge-only USB cables and it is very frustrating! Make sure you have a USB cable you know is good for data sync.
+2. Enter Bootloader Mode:
+   - Hold down the BOOT/BOOTSEL button
+   - While holding BOOT/BOOTSEL, press and release the reset button
+   - Continue holding BOOT/BOOTSEL until RPI-RP2 drive appears
+   
+   Alternative Method:
+   - Start with board unplugged
+   - Hold BOOT/BOOTSEL button
+   - Plug in USB while holding button
+   - Wait for RPI-RP2 drive to appear
 
-You will see a new disk drive appear called RPI-RP2.
+3. Install CircuitPython:
+   - Drag the downloaded .uf2 file to RPI-RP2 drive
+   - Wait for CIRCUITPY drive to appear
 
-Drag the adafruit_circuitpython_etc.uf2 file to RPI-RP2.
+> **Important**: Use a data-capable USB cable, not just a charging cable.
 
-The RPI-RP2 drive will disappear and a new disk drive called CIRCUITPY will appear.
+## Using Mu Editor
 
-That's it, you're done!
+Mu Editor is the recommended development environment for CircuitPython.
+
+### Installation
+1. Download from https://codewith.mu/
+2. Install following OS-specific instructions
+3. Launch Mu Editor
+
+### Setup
+1. Connect KB2040 to computer
+2. Click "Mode" button
+3. Select "CircuitPython"
+4. Click "Load" to view code.py
+
+### Features
+- **Serial Console**: View code output
+- **Plotter**: Real-time data visualization
+- **Files**: Manage CIRCUITPY drive
+- **REPL**: Interactive Python console
+
+### Tips
+- Always save before running code
+- Use serial console for debugging
+- REPL is great for quick testing
+- Code can be edited in safe mode
 
 ## Safe Mode
-You want to edit your code.py or modify the files on your CIRCUITPY drive, but find that you can't. Perhaps your board has gotten into a state where CIRCUITPY is read-only. You may have turned off the CIRCUITPY drive altogether. Whatever the reason, safe mode can help.
 
-Safe mode in CircuitPython does not run any user code on startup, and disables auto-reload. This means a few things. First, safe mode bypasses any code in boot.py (where you can set CIRCUITPY read-only or turn it off completely). Second, it does not run the code in code.py. And finally, it does not automatically soft-reload when data is written to the CIRCUITPY drive.
-
-Therefore, whatever you may have done to put your board in a non-interactive state, safe mode gives you the opportunity to correct it without losing all of the data on the CIRCUITPY drive.
+Safe mode bypasses user code and auto-reload, useful for fixing issues.
 
 ### Entering Safe Mode
-To enter safe mode when using CircuitPython, plug in your board or hit reset (highlighted in red above). Immediately after the board starts up or resets, it waits 1000ms. On some boards, the onboard status LED (highlighted in green above) will blink yellow during that time. If you press reset during that 1000ms, the board will start up in safe mode. It can be difficult to react to the yellow LED, so you may want to think of it simply as a slow double click of the reset button. (Remember, a fast double click of reset enters the bootloader.)
+1. Plug in board or press reset
+2. Wait for yellow LED blink (1000ms)
+3. Press reset during this window
+   
+> Think of it as a slow double-click of reset button.
 
 ### In Safe Mode
-If you successfully enter safe mode on CircuitPython, the LED will intermittently blink yellow three times.
+- LED blinks yellow three times
+- Code.py doesn't run
+- Files can be edited
+- Press reset to exit
 
-If you connect to the serial console, you'll find the following message.
+## I2C Configuration
 
-You can now edit the contents of the CIRCUITPY drive. Remember, your code will not run until you press the reset button, or unplug and plug in your board, to get out of safe mode.
+The KB2040 supports multiple I2C buses for LED matrix control.
 
-## I2C Pin Configuration for LED Matrices
+### Pin Configuration
 
-The KB2040 supports multiple I2C buses. Here are the recommended pin configurations for controlling LED matrices:
-
-### First I2C Bus (Default)
+#### First I2C Bus (Default)
 ```
 SCL: board.SCL (Pin 3)
 SDA: board.SDA (Pin 2)
 ```
 
-### Second I2C Bus (Alternative)
+#### Second I2C Bus (Alternative)
 ```
 SCL: board.A3 (Pin 26)
 SDA: board.A2 (Pin 25)
 ```
 
-### Connection Diagram
+### Connection Diagrams
 
 ```
 First LED Matrix Set (Default I2C Bus)
@@ -76,20 +115,60 @@ Second LED Matrix Set (Alternative I2C Bus)
 +------------------+     +------------------+
 ```
 
-## Important Notes
-1. Both I2C buses share the same power (3.3V) and ground
-2. The KB2040 operates at 3.3V - ensure LED matrices are compatible
-3. Set different I2C addresses for matrices on the same bus using A0, A1, A2 pins
-4. Use a data-capable USB cable for programming and power
-5. The board can be powered via USB or external 3.3V power supply
+### Important Notes
+1. Both buses share 3.3V power and ground
+2. KB2040 operates at 3.3V
+3. Set different I2C addresses using A0, A1, A2 pins
+4. Use data-capable USB cable
+5. Can be powered via USB or external 3.3V
 
-## I2C Address Configuration
-For matrices on the same bus, set different addresses using the A0, A1, A2 pins:
-- A0, A1, A2 all LOW (GND) = 0x70
-- A0 HIGH (3.3V), A1, A2 LOW = 0x71
-- A1 HIGH, A0, A2 LOW = 0x72
-- A0, A1 HIGH, A2 LOW = 0x73
-- A2 HIGH, A0, A1 LOW = 0x74
-- A0, A2 HIGH, A1 LOW = 0x75
-- A1, A2 HIGH, A0 LOW = 0x76
-- A0, A1, A2 all HIGH = 0x77
+### I2C Address Configuration
+| A2 | A1 | A0 | Address |
+|----|----|----|---------|
+| 0  | 0  | 0  | 0x70    |
+| 0  | 0  | 1  | 0x71    |
+| 0  | 1  | 0  | 0x72    |
+| 0  | 1  | 1  | 0x73    |
+| 1  | 0  | 0  | 0x74    |
+| 1  | 0  | 1  | 0x75    |
+| 1  | 1  | 0  | 0x76    |
+| 1  | 1  | 1  | 0x77    |
+```
+
+## Power Configuration
+
+### Board Power
+- KB2040 operates at 3.3V
+- Power via USB for programming and control
+- GPIO pins are 3.3V logic level
+
+### LED Matrix Power (5V)
+LED matrices can be powered from a 5V source while keeping I2C signals at 3.3V:
+
+```
++------------------+     +------------------+
+|     KB2040       |     |   LED Matrix     |
+|                  |     |                  |
+| Pin 3 (SCL) -----+-----+ SCL             |
+| Pin 2 (SDA) -----+-----+ SDA             |
+| GND      --------+-----+ GND             |
+|                  |     |                  |
+|                  |     | VCC -----+       |
+|                  |     |          |       |
+|                  |     |          v       |
+|                  |     |      5V Battery  |
++------------------+     +------------------+
+```
+
+### Important Notes
+1. Keep I2C signals (SDA, SCL) at 3.3V
+2. Connect GND between KB2040 and LED matrices
+3. Power LED matrices from 5V battery
+4. Do not connect 5V to any KB2040 pins
+5. Use a common ground between all components
+
+### Safety Considerations
+- Always connect ground first
+- Double-check voltage levels before connecting
+- Use appropriate power supply for LED matrices
+- Consider adding a fuse or current limiting resistor
