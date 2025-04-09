@@ -38,7 +38,7 @@ from patterns.led_patterns import PATTERNS
 
 # Initialize both I2C buses
 i2c1 = board.I2C()  # Primary I2C bus (default)
-i2c2 = busio.I2C(board.GP17, board.GP27)  # Secondary I2C bus
+i2c2 = busio.I2C(board.D17, board.D27)  # Secondary I2C bus using GPIO 17 and 27
 
 # Create matrix objects for first set (Bus 1)
 matrix1_1 = Matrix8x8(i2c1, address=0x72)  # Right matrix
