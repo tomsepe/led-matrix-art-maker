@@ -31,9 +31,10 @@ python3 -m venv env
 # Activate the virtual environment
 source env/bin/activate
 
-# Install Adafruit libraries for LED matrix control
+# Install required libraries
 pip install adafruit-blinka
 pip install adafruit-circuitpython-ht16k33
+pip install smbus2  # Required for multiple I2C bus support
 ```
 
 ## Creating Pixel Art
@@ -78,6 +79,16 @@ python led-1x3matrix-show.py
 - Changes patterns every 1-5 seconds
 - Runs until interrupted with Ctrl+C
 
+### Six Matrix Display (Dual I2C Bus)
+```bash
+python led-2x3matrix-show.py
+```
+- Displays patterns on six 8x8 LED matrices using two I2C buses
+- Each matrix changes patterns independently
+- Changes patterns every 1-5 seconds
+- Runs until interrupted with Ctrl+C
+- Requires additional I2C bus configuration (see Hardware Setup)
+
 ### Fast Display (Experimental)
 ```bash
 python fast.py
@@ -98,8 +109,33 @@ Connect three 8x8 LED matrices via I2C with addresses:
 - Middle matrix: 0x71
 - Right matrix: 0x72
 
+### Six Matrix Setup (Dual I2C Bus)
+This setup requires two separate I2C buses:
+
+1. Enable the second I2C bus by adding to `/boot/config.txt`:
+```bash
+# Enable I2C interface
+dtparam=i2c_arm=on
+
+# Configure second I2C bus
+dtoverlay=i2c-gpio,bus=2,i2c_gpio_sda=17,i2c_gpio_scl=27
+```
+
+2. Connect the matrices:
+- First set (Bus 1):
+  - Left matrix: 0x70
+  - Middle matrix: 0x71
+  - Right matrix: 0x72
+- Second set (Bus 2):
+  - Left matrix: 0x70
+  - Middle matrix: 0x71
+  - Right matrix: 0x72
+
+3. Reboot the Raspberry Pi after making changes to `/boot/config.txt`
+
 ### General Notes
 - All matrices use maximum brightness (1.0) for optimal visibility
 - I2C must be enabled on your Raspberry Pi
 - Ensure proper power supply for the LED matrices
 - Check I2C addresses match your hardware configuration
+- For multiple I2C bus setups, verify connections with `i2cdetect -y 1` and `i2cdetect -y 2`
