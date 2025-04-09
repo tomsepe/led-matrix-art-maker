@@ -1,3 +1,4 @@
+# pylint: disable=import-error,no-member
 # For use with adafruit KB2040 board
 #  SPDX-FileCopyrightText: 2021-2023 Kattni Rembor for Adafruit Industries
 # SPDX-License-Identifier: MIT
