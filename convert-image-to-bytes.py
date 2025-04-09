@@ -14,7 +14,7 @@ Features:
 
 Input:
 - 8x8 PNG files in image-data directory
-- Files must be named 'pixel_art_*8x8*.png'
+- Files must be named either 'pixel_art_*8x8*.png' or 'lowres_*.png'
 
 Output:
 - patterns/led_patterns.py containing a PATTERNS dictionary
@@ -58,6 +58,9 @@ def image_to_pattern(image_path):
         
         # Add header
         pattern_name = os.path.basename(image_path).split('.')[0]
+        # Remove 'lowres_' prefix if present
+        if pattern_name.startswith('lowres_'):
+            pattern_name = pattern_name[7:]
         pattern_lines.append(f"    '{pattern_name}': bytes([")
         pattern_lines.append("        # 8x8 matrix pattern")
         
@@ -88,10 +91,17 @@ def convert_all_images():
     """Convert all 8x8 PNG images in image-data directory to pattern format"""
     ensure_directories()
     
-    # Get all PNG files
-    image_files = glob.glob("image-data/pixel_art_*8x8*.png")
+    # Get all PNG files with either naming pattern
+    image_files = (
+        glob.glob("image-data/pixel_art_*8x8*.png") +
+        glob.glob("image-data/lowres_*.png")
+    )
+    
     if not image_files:
         print("No 8x8 image files found in 'image-data' directory")
+        print("Expected files matching either:")
+        print("- image-data/pixel_art_*8x8*.png")
+        print("- image-data/lowres_*.png")
         return
     
     print(f"Found {len(image_files)} images to convert")
