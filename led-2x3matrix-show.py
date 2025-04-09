@@ -35,10 +35,11 @@ import os
 import time
 import random
 from patterns.led_patterns import PATTERNS
+import smbus2  # For direct I2C access
 
 # Initialize both I2C buses
 i2c1 = board.I2C()  # Primary I2C bus (default)
-i2c2 = busio.I2C(board.D45, board.D44)  # Secondary I2C bus using GPIO 45 and 44
+i2c2 = smbus2.SMBus(2)  # Secondary I2C bus using bus 2
 
 # Create matrix objects for first set (Bus 1)
 matrix1_1 = Matrix8x8(i2c1, address=0x72)  # Right matrix
