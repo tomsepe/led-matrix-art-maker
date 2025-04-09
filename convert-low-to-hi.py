@@ -3,10 +3,14 @@ Convert high-resolution images to low-resolution 8x8 versions.
 
 This script reads PNG files from the 'saved-drawings' directory,
 resizes them to 8x8 pixels, and saves them in the 'image-data' directory.
+Uses the same naming convention as bit-draw.py:
+- High-res: pixel_art_{timestamp}.png
+- Low-res: pixel_art_{timestamp}_{width}x{height}.png
 """
 
 import os
 from PIL import Image
+from datetime import datetime
 
 # Create directories if they don't exist
 os.makedirs('saved-drawings', exist_ok=True)
@@ -46,7 +50,17 @@ def main():
     success_count = 0
     for input_file in input_files:
         input_path = os.path.join('saved-drawings', input_file)
-        output_path = os.path.join('image-data', f"lowres_{input_file}")
+        
+        # Extract timestamp from filename (assuming format pixel_art_TIMESTAMP.png)
+        try:
+            # Remove 'pixel_art_' prefix and '.png' suffix
+            timestamp = input_file[10:-4]
+        except IndexError:
+            print(f"Skipping {input_file}: Invalid filename format")
+            continue
+            
+        # Create output filename with correct format
+        output_path = os.path.join('image-data', f"pixel_art_{timestamp}_8x8.png")
         
         if convert_image(input_path, output_path):
             success_count += 1
